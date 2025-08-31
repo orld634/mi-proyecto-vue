@@ -5,7 +5,12 @@
       <h1>BRAZZINO’S</h1>
     </div>
 
-    <!-- Carrusel de imágenes -->
+        <!-- Botón de login para usuarios no autenticados -->
+        <router-link v-else to="/login" class="nav-link login-link">Iniciar Sesión</router-link>
+      </div>
+    </nav>
+
+    <div class="carrusel-container">
     <img
       v-for="(img, index) in imagenes"
       :key="index"
@@ -20,11 +25,28 @@
       <button @click="siguiente">&#10095;</button>
     </div>
 
-    <!-- Botón hacia catálogo -->
-    <div class="carrusel-catalogo">
-      <RouterLink to="/catalogo">
-        <v-btn>Ir al Catálogo</v-btn>
-      </RouterLink>
+    <!-- Galería de tarjetas del catálogo -->
+    <div id="catalogo" class="image-gallery">
+      <div class="card" v-for="(img, index) in imagenesCatalogo" :key="index">
+        <div class="descuento-icono">20% dto</div>
+        <img :src="img.src" :alt="img.alt" />
+        <div class="card-content">
+          <h3>{{ img.titulo }}</h3>
+          <p>{{ img.descripcion }}</p>
+          <!-- Mostrar precio solo a usuarios autenticados -->
+          <div v-if="isAuthenticated" class="price-section">
+            <span class="price">{{ img.precio }}</span>
+            <button class="add-to-cart-btn" @click="addToCart(img)">
+              🛒 Agregar
+            </button>
+          </div>
+          <div v-else class="login-prompt">
+            <router-link to="/login" class="login-to-see-price">
+              Inicia sesión para ver precios
+            </router-link>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>

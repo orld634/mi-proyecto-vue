@@ -88,7 +88,6 @@ onUnmounted(() => {
 .carrusel-botones {
   position: absolute;
   top: 50%;
-  height: 20%;
   width: 100%;
   display: flex;
   justify-content: space-between;
@@ -135,7 +134,6 @@ onUnmounted(() => {
 .image-gallery {
   margin-top: 2rem;
   display: flex;
-  justify-content: space-around;
   gap: 1rem;
   flex-wrap: wrap;
 }
