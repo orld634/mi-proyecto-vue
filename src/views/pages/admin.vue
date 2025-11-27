@@ -8,12 +8,23 @@
   <div class="main-layout" :class="{ 'light-mode': !isDarkMode }">
     <!-- Fondo animado -->
     <div class="background-overlay"></div>
-
-    <!-- Barra de navegación simplificada -->
+    <!-- Barra de navegación con pestañas -->
     <nav class="navbar" :class="{ 'light-mode': !isDarkMode }">
       <div class="navbar-content">
-        <h1 class="brand-title">BRAZZINO'S - Admin</h1>
+        <h1 class="brand-title">Brindis Express - Admin</h1>
         <div class="nav-section">
+          <!-- Pestañas -->
+          <div class="nav-tabs">
+            <button
+              v-for="tab in tabs"
+              :key="tab.id"
+              class="nav-tab"
+              :class="{ active: activeTab === tab.id }"
+              @click="activeTab = tab.id"
+            >
+              {{ tab.name }}
+            </button>
+          </div>
           <div class="nav-links">
             <a href="#notifications" class="nav-link">
               <span class="notification-icon">🔔</span>
@@ -39,11 +50,10 @@
         </div>
       </div>
     </nav>
-
     <!-- Contenedor con scroll -->
     <div class="content-scroll">
       <!-- Dashboard de Estadísticas -->
-      <div id="dashboard" class="catalog-section">
+      <div v-if="activeTab === 'dashboard'" id="dashboard" class="catalog-section">
         <!-- Gráficos de Estadísticas -->
         <div class="charts-section">
           <div class="chart-card">
@@ -101,13 +111,11 @@
         </button>
         <div v-if="showFilters" class="filters-content">
           <h3>Filtrar Productos</h3>
-          
           <div class="filter-group">
             <label>Rango de Precio</label>
             <input v-model="priceRange.min" type="number" placeholder="Mín">
             <input v-model="priceRange.max" type="number" placeholder="Máx">
           </div>
-          
           <div class="filter-group">
             <label>Stock</label>
             <select v-model="stockFilter">
@@ -117,7 +125,6 @@
               <option value="good">Stock bueno</option>
             </select>
           </div>
-          
           <button @click="applyFilters" class="apply-filters-btn">
             Aplicar Filtros
           </button>
@@ -126,9 +133,8 @@
           </button>
         </div>
       </div>
-
       <!-- Gestión de Productos -->
-      <div id="products" class="catalog-section">
+      <div v-if="activeTab === 'products'" id="products" class="catalog-section">
         <div class="section-header">
           <h2 class="section-title">🛍️ Gestión de Productos e Inventario</h2>
           <div class="title-underline"></div>
@@ -178,37 +184,85 @@
         </div>
       </div>
       <!-- Gestión de Categorías -->
-<div id="categories" class="catalog-section">
+      <!-- Gestión de Categorías -->
+<!-- Gestión de Categorías -->
+<!-- Gestión de Categorías -->
+<div v-if="activeTab === 'categories'" id="categories" class="catalog-section">
   <div class="section-header">
     <h2 class="section-title">📋 Gestión de Categorías</h2>
     <div class="title-underline"></div>
   </div>
+  
   <div class="search-bar">
     <input v-model="categorySearchQuery" placeholder="🔍 Buscar categorías..." />
     <button @click="openCategoryModal(null)" class="add-btn">➕ Agregar Categoría</button>
   </div>
-  <div class="categories-grid" v-if="categories.length > 0">
-    <draggable v-model="categories" @end="saveCategoryOrder" item-key="name">
-      <template #item="{ element }">
-        <div class="category-card">
-          <h3 class="category-title">{{ element.name }}</h3>
-          <p class="category-description">Productos: {{ element.productCount }}</p>
-          <div class="admin-actions">
-            <button class="edit-product-btn" @click="openCategoryModal(element)">
-              <span class="edit-icon">✏️</span> Editar
-            </button>
-            <button class="delete-btn" @click="deleteCategory(categories.indexOf(element))">
-              <span class="delete-icon">🗑️</span> Eliminar
-            </button>
+
+  <div v-if="filteredCategories.length > 0">
+    <!-- Iterar por cada categoría -->
+    <div v-for="(category, index) in filteredCategories" :key="category.id" class="category-section-wrapper">
+      
+      <!-- 📌 TÍTULO DE LA CATEGORÍA -->
+      <div class="category-header">
+        <div class="category-info-header">
+          <h3 class="category-title-large">{{ category.name }}</h3>
+          <p class="category-product-count">{{ getProductsByCategory(category.id).length }} productos</p>
+        </div>
+        <div class="category-actions-header">
+          <button class="edit-product-btn" @click="openCategoryModal(category)">
+            <span class="edit-icon">✏️</span> Editar
+          </button>
+          <button class="delete-btn" @click="deleteCategory(index)">
+            <span class="delete-icon">🗑️</span> Eliminar
+          </button>
+        </div>
+      </div>
+
+      <!-- 📦 PRODUCTOS DE ESTA CATEGORÍA -->
+      <div class="products-in-category">
+        <div v-if="getProductsByCategory(category.id).length > 0" class="products-grid">
+          <div class="product-card" v-for="product in getProductsByCategory(category.id)" :key="product.id">
+            <div class="card-image-container">
+              <img :src="product.image" :alt="product.name" class="product-image" />
+              <div class="image-overlay"></div>
+            </div>
+            <div class="product-info">
+              <h3 class="product-title">{{ product.name }}</h3>
+              <p class="product-description">Stock: {{ product.stock }} unidades</p>
+              <p class="product-description">Categoría: {{ product.category }}</p>
+              <div class="admin-user-view">
+                <div class="admin-controls">
+                  <div class="price-display admin-price">
+                    <span class="price-label">Precio:</span>
+                    <span class="price-value admin">{{ product.price }}</span>
+                  </div>
+                  <div class="admin-actions">
+                    <button class="edit-product-btn" @click="openProductModal(product)">
+                      <span class="edit-icon">✏️</span> Editar
+                    </button>
+                    <button class="delete-btn" @click="deleteProduct(products.indexOf(product))">
+                      <span class="delete-icon">🗑️</span> Eliminar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </template>
-    </draggable>
+        
+        <!-- Mensaje si no hay productos -->
+        <div v-else class="no-products-message">
+          <p>📦 No hay productos en esta categoría</p>
+        </div>
+      </div>
+      
+    </div>
   </div>
-  <p v-else>No hay categorías registradas.</p>
+  
+  <p v-else class="no-categories-message">No hay categorías registradas.</p>
 </div>
       <!-- Gestión de Pedidos -->
-      <div id="orders" class="catalog-section">
+      <div v-if="activeTab === 'orders'" id="orders" class="catalog-section">
         <div class="section-header">
           <h2 class="section-title">📦 Gestión de Pedidos</h2>
           <div class="title-underline"></div>
@@ -257,7 +311,7 @@
         </div>
       </div>
       <!-- Gestión de Usuarios -->
-      <div id="users" class="catalog-section">
+      <div v-if="activeTab === 'users'" id="users" class="catalog-section">
         <div class="section-header">
           <h2 class="section-title">👥 Gestión de Usuarios</h2>
           <div class="title-underline"></div>
@@ -302,7 +356,7 @@
         </div>
       </div>
       <!-- Gestión de Promociones -->
-      <div id="promotions" class="catalog-section">
+      <div v-if="activeTab === 'promotions'" id="promotions" class="catalog-section">
         <div class="section-header">
           <h2 class="section-title">🎉 Gestión de Promociones</h2>
           <div class="title-underline"></div>
@@ -329,7 +383,7 @@
         </div>
       </div>
       <!-- Gestión de Notificaciones -->
-      <div id="notifications" class="catalog-section">
+      <div v-if="activeTab === 'notifications'" id="notifications" class="catalog-section">
         <div class="section-header">
           <h2 class="section-title">🔔 Notificaciones</h2>
           <div class="title-underline"></div>
@@ -359,7 +413,7 @@
         </div>
       </div>
       <!-- Gestión de Tickets -->
-      <div id="tickets" class="catalog-section">
+      <div v-if="activeTab === 'tickets'" id="tickets" class="catalog-section">
         <div class="section-header">
           <h2 class="section-title">💬 Soporte al Cliente</h2>
           <div class="title-underline"></div>
@@ -390,7 +444,7 @@
         </div>
       </div>
       <!-- Logs de Actividad -->
-      <div id="logs" class="catalog-section">
+      <div v-if="activeTab === 'logs'" id="logs" class="catalog-section">
         <div class="section-header">
           <h2 class="section-title">📜 Logs de Actividad</h2>
           <div class="title-underline"></div>
@@ -412,7 +466,7 @@
         </div>
       </div>
       <!-- Métodos de Pago -->
-      <div id="payment-methods" class="catalog-section">
+      <div v-if="activeTab === 'payment-methods'" id="payment-methods" class="catalog-section">
         <div class="section-header">
           <h2 class="section-title">💳 Métodos de Pago</h2>
           <div class="title-underline"></div>
@@ -430,7 +484,7 @@
         </div>
       </div>
       <!-- Backup y Restore -->
-      <div id="backup" class="catalog-section">
+      <div v-if="activeTab === 'backup'" id="backup" class="catalog-section">
         <div class="section-header">
           <h2 class="section-title">💾 Backup y Restore</h2>
           <div class="title-underline"></div>
@@ -444,189 +498,173 @@
           </div>
         </div>
       </div>
-
       <!-- Modal para Productos -->
       <div v-if="showProductModal" class="modal-overlay">
-  <div class="modal-content large-modal">
-    <h2>{{ currentProduct ? 'Editar Producto' : 'Agregar Producto' }}</h2>
-    <form @submit.prevent="saveProduct">
-      <!-- Nombre - @IsString() @MinLength(1) @MaxLength(100) -->
-      <div class="form-group">
-        <label for="nombre">Nombre del Producto *</label>
-        <input 
-          id="nombre"
-          v-model="productForm.nombre" 
-          placeholder="Nombre del producto" 
-          maxlength="100"
-          required 
-        />
+        <div class="modal-content large-modal">
+          <h2>{{ currentProduct ? 'Editar Producto' : 'Agregar Producto' }}</h2>
+          <form @submit.prevent="saveProduct">
+            <!-- Nombre - @IsString() @MinLength(1) @MaxLength(100) -->
+            <div class="form-group">
+              <label for="nombre">Nombre del Producto *</label>
+              <input
+                id="nombre"
+                v-model="productForm.nombre"
+                placeholder="Nombre del producto"
+                maxlength="100"
+                required
+              />
+            </div>
+            <!-- Marca - @IsOptional() @IsString() -->
+            <div class="form-group">
+              <label for="marca">Marca</label>
+              <input
+                id="marca"
+                v-model="productForm.marca"
+                placeholder="Marca del producto (opcional)"
+              />
+            </div>
+            <!-- Precio Venta - @IsNumber() @IsPositive() -->
+            <div class="form-group">
+              <label for="precio_venta">Precio de Venta *</label>
+              <input
+                id="precio_venta"
+                v-model.number="productForm.precio_venta"
+                type="number"
+                step="0.01"
+                min="0.01"
+                placeholder="Precio de venta (ej: 85000)"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="precio_compra">Precio de compra *</label>
+              <input
+                id="precio_compra"
+                v-model.number="productForm.precio_compra"
+                type="number"
+                step="0.01"
+                min="0.01"
+                placeholder="Precio de compra (ej: 85000)"
+                required
+              />
+            </div>
+            <!-- Stock Mínimo - @IsInt() @Min(0) -->
+            <div class="form-group">
+              <label for="stock_minimo">Stock Mínimo *</label>
+              <input
+                id="stock_minimo"
+                v-model.number="productForm.stock_minimo"
+                type="number"
+                min="0"
+                placeholder="Stock mínimo (ej: 10)"
+                required
+              />
+            </div>
+            <!-- Stock Actual - @IsInt() @Min(0) -->
+            <div class="form-group">
+              <label for="stock_actual">Stock Actual *</label>
+              <input
+                id="stock_actual"
+                v-model.number="productForm.stock_actual"
+                type="number"
+                min="0"
+                placeholder="Stock actual"
+                required
+              />
+            </div>
+            <!-- Imagen URL - @IsOptional() @IsString() @MaxLength(255) -->
+            <div class="form-group">
+              <label for="imagen_url">URL de la Imagen</label>
+              <input
+                id="imagen_url"
+                v-model="productForm.imagen_url"
+                type="url"
+                maxlength="255"
+                placeholder="https://ejemplo.com/imagen.jpg"
+              />
+            </div>
+            <!-- Código de Barras - @IsOptional() @IsString() -->
+            <div class="form-group">
+              <label for="codigo_barras">Código de Barras</label>
+              <input
+                id="codigo_barras"
+                v-model="productForm.codigo_barras"
+                placeholder="Código de barras (opcional)"
+              />
+            </div>
+            <!-- Activo - @IsOptional() @IsBoolean() -->
+            <div class="form-group checkbox-group">
+              <label for="activo">
+                <input
+                  id="activo"
+                  v-model="productForm.activo"
+                  type="checkbox"
+                />
+                Producto Activo
+              </label>
+            </div>
+            <!-- ID Categoría - @IsInt() @IsPositive() -->
+            <div class="form-group">
+              <label for="id_categoria">ID de Categoría *</label>
+              <input
+                id="id_categoria"
+                v-model.number="productForm.id_categoria"
+                type="number"
+                placeholder="Ingrese el ID de la categoría"
+                required
+              />
+            </div>
+            <div class="modal-actions">
+              <button type="submit" class="save-btn">💾 Guardar</button>
+              <button type="button" @click="closeProductModal" class="cancel-btn">❌ Cancelar</button>
+            </div>
+          </form>
+        </div>
       </div>
-
-      <!-- Marca - @IsOptional() @IsString() -->
-      <div class="form-group">
-        <label for="marca">Marca</label>
-        <input 
-          id="marca"
-          v-model="productForm.marca" 
-          placeholder="Marca del producto (opcional)" 
-        />
-      </div>
-
-      <!-- Precio Venta - @IsNumber() @IsPositive() -->
-      <div class="form-group">
-        <label for="precio_venta">Precio de Venta *</label>
-        <input 
-          id="precio_venta"
-          v-model.number="productForm.precio_venta" 
-          type="number"
-          step="0.01"
-          min="0.01"
-          placeholder="Precio de venta (ej: 85000)" 
-          required 
-        />
-      </div>
-      <div class="form-group">
-        <label for="precio_compra">Precio de compra *</label>
-        <input 
-          id="precio_venta"
-          v-model.number="productForm.precio_compra" 
-          type="number"
-          step="0.01"
-          min="0.01"
-          placeholder="Precio de compra (ej: 85000)" 
-          required 
-        />
-      </div>
-
-
-      <!-- Stock Mínimo - @IsInt() @Min(0) -->
-      <div class="form-group">
-        <label for="stock_minimo">Stock Mínimo *</label>
-        <input 
-          id="stock_minimo"
-          v-model.number="productForm.stock_minimo" 
-          type="number"
-          min="0"
-          placeholder="Stock mínimo (ej: 10)" 
-          required 
-        />
-      </div>
-
-      <!-- Stock Actual - @IsInt() @Min(0) -->
-      <div class="form-group">
-        <label for="stock_actual">Stock Actual *</label>
-        <input 
-          id="stock_actual"
-          v-model.number="productForm.stock_actual" 
-          type="number"
-          min="0"
-          placeholder="Stock actual" 
-          required 
-        />
-      </div>
-
-      <!-- Imagen URL - @IsOptional() @IsString() @MaxLength(255) -->
-      <div class="form-group">
-        <label for="imagen_url">URL de la Imagen</label>
-        <input 
-          id="imagen_url"
-          v-model="productForm.imagen_url" 
-          type="url"
-          maxlength="255"
-          placeholder="https://ejemplo.com/imagen.jpg" 
-        />
-      </div>
-
-      <!-- Código de Barras - @IsOptional() @IsString() -->
-      <div class="form-group">
-        <label for="codigo_barras">Código de Barras</label>
-        <input 
-          id="codigo_barras"
-          v-model="productForm.codigo_barras" 
-          placeholder="Código de barras (opcional)" 
-        />
-      </div>
-
-      <!-- Activo - @IsOptional() @IsBoolean() -->
-      <div class="form-group checkbox-group">
-        <label for="activo">
-          <input 
-            id="activo"
-            v-model="productForm.activo" 
-            type="checkbox"
-          />
-          Producto Activo
-        </label>
-      </div>
-
-      <!-- ID Categoría - @IsInt() @IsPositive() -->
-      <div class="form-group">
-  <label for="id_categoria">ID de Categoría *</label>
-  <input
-    id="id_categoria"
-    v-model.number="productForm.id_categoria"
-    type="number"
-    placeholder="Ingrese el ID de la categoría"
-    required
-  >
-</div>
-
-      <div class="modal-actions">
-        <button type="submit" class="save-btn">💾 Guardar</button>
-        <button type="button" @click="closeProductModal" class="cancel-btn">❌ Cancelar</button>
-      </div>
-    </form>
-  </div>
-</div>
-
       <!-- Modal para Categorías -->
       <div v-if="showCategoryModal" class="modal-overlay">
-  <div class="modal-content large-modal">
-    <h2>{{ currentCategory ? 'Editar Categoría' : 'Agregar Categoría' }}</h2>
-    <form @submit.prevent="saveCategory">
-      <!-- Nombre - @IsString() @MinLength(1) @MaxLength(100) -->
-      <div class="form-group">
-        <label for="cat_nombre">Nombre de la Categoría *</label>
-        <input 
-          id="cat_nombre"
-          v-model="categoryForm.nombre" 
-          placeholder="Nombre de la categoría" 
-          maxlength="100"
-          required 
-        />
+        <div class="modal-content large-modal">
+          <h2>{{ currentCategory ? 'Editar Categoría' : 'Agregar Categoría' }}</h2>
+          <form @submit.prevent="saveCategory">
+            <!-- Nombre - @IsString() @MinLength(1) @MaxLength(100) -->
+            <div class="form-group">
+              <label for="cat_nombre">Nombre de la Categoría *</label>
+              <input
+                id="cat_nombre"
+                v-model="categoryForm.nombre"
+                placeholder="Nombre de la categoría"
+                maxlength="100"
+                required
+              />
+            </div>
+            <!-- Descripción - @IsOptional() @IsString() -->
+            <div class="form-group">
+              <label for="cat_descripcion">Descripción</label>
+              <textarea
+                id="cat_descripcion"
+                v-model="categoryForm.descripcion"
+                placeholder="Descripción de la categoría (opcional)"
+                rows="4"
+              ></textarea>
+            </div>
+            <!-- Activo - @IsOptional() @IsBoolean() -->
+            <div class="form-group checkbox-group">
+              <label for="cat_activo">
+                <input
+                  id="cat_activo"
+                  v-model="categoryForm.activo"
+                  type="checkbox"
+                />
+                Categoría Activa
+              </label>
+            </div>
+            <div class="modal-actions">
+              <button type="submit" class="save-btn">💾 Guardar</button>
+              <button type="button" @click="closeCategoryModal" class="cancel-btn">❌ Cancelar</button>
+            </div>
+          </form>
+        </div>
       </div>
-
-      <!-- Descripción - @IsOptional() @IsString() -->
-      <div class="form-group">
-        <label for="cat_descripcion">Descripción</label>
-        <textarea 
-          id="cat_descripcion"
-          v-model="categoryForm.descripcion" 
-          placeholder="Descripción de la categoría (opcional)"
-          rows="4"
-        ></textarea>
-      </div>
-
-      <!-- Activo - @IsOptional() @IsBoolean() -->
-      <div class="form-group checkbox-group">
-        <label for="cat_activo">
-          <input 
-            id="cat_activo"
-            v-model="categoryForm.activo" 
-            type="checkbox"
-          />
-          Categoría Activa
-        </label>
-      </div>
-
-      <div class="modal-actions">
-        <button type="submit" class="save-btn">💾 Guardar</button>
-        <button type="button" @click="closeCategoryModal" class="cancel-btn">❌ Cancelar</button>
-      </div>
-    </form>
-  </div>
-</div>
-
       <!-- Modal para Usuarios -->
       <div v-if="showUserModal" class="modal-overlay">
         <div class="modal-content large-modal">
@@ -649,7 +687,6 @@
           </form>
         </div>
       </div>
-
       <!-- Modal para Promociones -->
       <div v-if="showPromotionModal" class="modal-overlay">
         <div class="modal-content large-modal">
@@ -669,7 +706,6 @@
           </form>
         </div>
       </div>
-
       <!-- Modal para Detalles de Pedido -->
       <div v-if="showOrderDetailsModal" class="modal-overlay">
         <div class="modal-content large-modal">
@@ -687,7 +723,6 @@
           </div>
         </div>
       </div>
-
       <!-- Modal para Actualizar Estado de Pedido -->
       <div v-if="showOrderUpdateModal" class="modal-overlay">
         <div class="modal-content large-modal">
@@ -728,7 +763,6 @@
           </div>
         </div>
       </div>
-
       <!-- Footer -->
       <footer class="footer" id="contactanos">
         <div class="footer-content">
@@ -763,37 +797,46 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { Chart, registerables } from 'chart.js';
+import { useStore } from '@/stores'; 
 import draggable from 'vuedraggable';
 Chart.register(...registerables);
-
+const activeTab = ref('dashboard');
+const tabs = ref([
+  { id: 'dashboard', name: 'Dashboard' },
+  { id: 'products', name: 'Productos' },
+  { id: 'categories', name: 'Categorías' },
+  { id: 'orders', name: 'Pedidos' },
+  { id: 'users', name: 'Usuarios' },
+  { id: 'promotions', name: 'Promociones' },
+  { id: 'notifications', name: 'Notificaciones' },
+  { id: 'tickets', name: 'Tickets' },
+  { id: 'logs', name: 'Logs' },
+  { id: 'payment-methods', name: 'Métodos de Pago' },
+  { id: 'backup', name: 'Backup' },
+]);
 const showFilters = ref(false);
 const priceRange = ref({ min: 0, max: 1000000 });
 const isLoading = ref(false);
 const isDarkMode = ref(true);
 const backupProgress = ref(0);
-
+const store = useStore();
 // URL base del backend
 const API_URL = 'http://localhost:8222'; // Ajusta según tu configuración
-
 function applyFilters() {
   showToast('Filtros aplicados', 'info');
 }
-
 function clearFilters() {
   priceRange.value = { min: 0, max: 1000000 };
   stockFilter.value = '';
   showToast('Filtros limpiados', 'info');
 }
-
 const salesChart = ref(null);
 const stockChart = ref(null);
 const userChart = ref(null);
-
 function initCharts() {
   // Gráfico de ventas
   new Chart(salesChart.value, {
@@ -819,7 +862,6 @@ function initCharts() {
       }
     }
   });
-
   // Gráfico de stock
   new Chart(stockChart.value, {
     type: 'doughnut',
@@ -837,7 +879,6 @@ function initCharts() {
       }
     }
   });
-
   // Gráfico de usuarios
   new Chart(userChart.value, {
     type: 'pie',
@@ -856,17 +897,14 @@ function initCharts() {
     }
   });
 }
-
 function toggleTheme() {
   isDarkMode.value = !isDarkMode.value;
   document.body.classList.toggle('dark-mode', isDarkMode.value);
 }
-
 // Estado de autenticación
 const isAuthenticated = ref(false);
 const userName = ref('');
 const router = useRouter();
-
 // Datos de ejemplo para productos
 const products = ref([
   {
@@ -897,14 +935,12 @@ const products = ref([
     category: 'Whisky'
   },
 ]);
-
 // Datos de ejemplo para categorías
 const categories = ref([
   { name: 'Licores', productCount: 1 },
   { name: 'Champagne', productCount: 1 },
   { name: 'Whisky', productCount: 1 }
 ]);
-
 // Datos de ejemplo para notificaciones
 const notifications = ref([
   {
@@ -929,23 +965,22 @@ const notifications = ref([
     read: true,
   },
 ]);
-
 // Búsqueda y filtro para productos
 const productSearchQuery = ref('');
+const categorySearchQuery = ref('');
 const stockFilter = ref('');
 const filteredProducts = computed(() => {
-  let filtered = products.value.filter(product => 
+  let filtered = products.value.filter(product =>
     product.name.toLowerCase().includes(productSearchQuery.value.toLowerCase())
   );
-
   if (stockFilter.value === 'low') {
     filtered = filtered.filter(product => product.stock > 0 && product.stock < 10);
   } else if (stockFilter.value === 'out') {
     filtered = filtered.filter(product => product.stock === 0);
   }
-
   return filtered;
 });
+// Búsqueda para categorías
 
 // Búsqueda y filtro para notificaciones
 const notificationSearchQuery = ref('');
@@ -955,20 +990,16 @@ const filteredNotifications = computed(() => {
     notification.title.toLowerCase().includes(notificationSearchQuery.value.toLowerCase()) ||
     notification.message.toLowerCase().includes(notificationSearchQuery.value.toLowerCase())
   );
-
   if (notificationFilter.value === 'unread') {
     filtered = filtered.filter(notification => !notification.read);
   } else if (notificationFilter.value === 'read') {
     filtered = filtered.filter(notification => notification.read);
   }
-
   return filtered;
 });
-
-const unreadNotifications = computed(() => 
+const unreadNotifications = computed(() =>
   notifications.value.filter(notification => !notification.read)
 );
-
 // Modal para productos
 const showProductModal = ref(false);
 const currentProduct = ref(null);
@@ -984,7 +1015,6 @@ const productForm = ref({
   activo: true,
   id_categoria: null
 });
-
 // Datos de ejemplo para pedidos
 const orders = ref([
   {
@@ -1018,11 +1048,9 @@ const orders = ref([
     total: '$120,000',
   },
 ]);
-
 // Modal para detalles de pedido
 const showOrderDetailsModal = ref(false);
 const currentOrderForDetails = ref(null);
-
 // Modal para actualizar estado de pedido
 const showOrderUpdateModal = ref(false);
 const currentOrderForUpdate = ref(null);
@@ -1031,7 +1059,6 @@ const orderForm = ref({
   status: '',
   newStatus: ''
 });
-
 // Datos de ejemplo para usuarios
 const users = ref([
   {
@@ -1053,7 +1080,6 @@ const users = ref([
     status: 'Inactivo',
   },
 ]);
-
 // Modal para usuarios
 const showUserModal = ref(false);
 const currentUser = ref(null);
@@ -1063,27 +1089,24 @@ const userForm = ref({
   role: 'Cliente',
   status: 'Activo',
 });
-
 // Búsqueda y filtros para pedidos
 const orderSearchQuery = ref('');
 const orderStatusFilter = ref('');
-const filteredOrders = computed(() => 
-  orders.value.filter(order => 
+const filteredOrders = computed(() =>
+  orders.value.filter(order =>
     order.productName.toLowerCase().includes(orderSearchQuery.value.toLowerCase()) &&
     (orderStatusFilter.value === '' || order.status === orderStatusFilter.value)
   )
 );
-
 // Búsqueda y filtros para usuarios
 const userSearchQuery = ref('');
 const userRoleFilter = ref('');
-const filteredUsers = computed(() => 
-  users.value.filter(user => 
+const filteredUsers = computed(() =>
+  users.value.filter(user =>
     user.name.toLowerCase().includes(userSearchQuery.value.toLowerCase()) &&
     (userRoleFilter.value === '' || user.role === userRoleFilter.value)
   )
 );
-
 // Estadísticas del dashboard
 const totalSales = computed(() => {
   return orders.value.reduce((sum, order) => {
@@ -1091,28 +1114,23 @@ const totalSales = computed(() => {
     return sum + (isNaN(value) ? 0 : value);
   }, 0).toLocaleString('es-CO', { style: 'currency', currency: 'COP' });
 });
-
-const activeUsers = computed(() => 
+const activeUsers = computed(() =>
   users.value.filter(user => user.status === 'Activo').length
 );
-
-const pendingOrders = computed(() => 
+const pendingOrders = computed(() =>
   orders.value.filter(order => order.status === 'Pendiente').length
 );
-
-const lowStockProducts = computed(() => 
+const lowStockProducts = computed(() =>
   products.value.filter(product => product.stock < 10).length
 );
-
-const openTickets = computed(() => 
+const openTickets = computed(() =>
   tickets.value.filter(ticket => ticket.status === 'Abierto').length
 );
-
 // Verificar autenticación
 function checkAuthStatus() {
   const adminToken = localStorage.getItem('adminToken');
   const adminUser = localStorage.getItem('adminUser');
-  
+ 
   if (adminToken && adminUser) {
     isAuthenticated.value = true;
     const userData = JSON.parse(adminUser);
@@ -1120,7 +1138,7 @@ function checkAuthStatus() {
   } else {
     const token = localStorage.getItem('authToken');
     const user = localStorage.getItem('user');
-    
+   
     if (token && user) {
       router.push('/login');
     } else {
@@ -1128,7 +1146,6 @@ function checkAuthStatus() {
     }
   }
 }
-
 // Función de logout
 function logout() {
   localStorage.removeItem('authToken');
@@ -1139,7 +1156,6 @@ function logout() {
   userName.value = '';
   router.push('/login');
 }
-
 // Acciones para productos
 function openProductModal(product) {
   if (product) {
@@ -1174,18 +1190,16 @@ function openProductModal(product) {
   }
   showProductModal.value = true;
 }
-
 function closeProductModal() {
   showProductModal.value = false;
 }
-
 // FUNCIÓN ACTUALIZADA: Guardar producto con conexión al backend
 async function saveProduct() {
   try {
     isLoading.value = true;
-    
+
     if (currentProduct.value) {
-      // Actualizar producto existente (si tienes ruta de actualización)
+      // Actualizar producto existente
       Object.assign(currentProduct.value, {
         name: productForm.value.nombre,
         brand: productForm.value.marca,
@@ -1196,7 +1210,7 @@ async function saveProduct() {
         activo: productForm.value.activo,
         id_categoria: productForm.value.id_categoria
       });
-      
+
       notifications.value.push({
         id: notifications.value.length + 1,
         title: 'Producto actualizado',
@@ -1205,12 +1219,12 @@ async function saveProduct() {
         read: false,
       });
     } else {
-      // Crear nuevo producto - CONEXIÓN AL BACKEND
+      // Crear nuevo producto en el BACKEND
       const productData = {
         nombre: productForm.value.nombre,
         marca: productForm.value.marca,
         precio_venta: productForm.value.precio_venta,
-        precio_compra:productForm.value.precio_compra,
+        precio_compra: productForm.value.precio_compra,
         stock_minimo: productForm.value.stock_minimo,
         stock_actual: productForm.value.stock_actual,
         imagen_url: productForm.value.imagen_url,
@@ -1234,8 +1248,21 @@ async function saveProduct() {
       }
 
       const result = await response.json();
-      
-      // Actualizar la lista local con el producto creado
+
+      // ✅ CLAVE: Agregar al store global
+      store.addProduct({
+        id_producto: result.id_producto,
+        nombre: productForm.value.nombre,
+        marca: productForm.value.marca,
+        precio_venta: productForm.value.precio_venta,
+        stock_actual: productForm.value.stock_actual,
+        imagen_url: productForm.value.imagen_url,
+        codigo_barras: productForm.value.codigo_barras,
+        activo: productForm.value.activo,
+        id_categoria: productForm.value.id_categoria
+      });
+
+      // También actualizar la lista local
       const newProduct = {
         id: result.id_producto,
         name: productForm.value.nombre,
@@ -1249,15 +1276,14 @@ async function saveProduct() {
         id_categoria: productForm.value.id_categoria,
         category: getCategoryNameById(productForm.value.id_categoria)
       };
-      
+
       products.value.push(newProduct);
-      
-      // Actualizar contador de categoría
+
       const category = categories.value.find(cat => cat.id === productForm.value.id_categoria);
       if (category) {
         category.productCount++;
       }
-      
+
       notifications.value.push({
         id: notifications.value.length + 1,
         title: 'Producto creado exitosamente',
@@ -1265,13 +1291,13 @@ async function saveProduct() {
         timestamp: new Date(),
         read: false,
       });
-      
+
       showToast('Producto creado exitosamente', 'success');
     }
-    
+
     checkLowStock();
     closeProductModal();
-    
+
   } catch (error) {
     console.error('Error al guardar producto:', error);
     showToast(error.message || 'Error al guardar el producto', 'error');
@@ -1286,7 +1312,6 @@ async function saveProduct() {
     isLoading.value = false;
   }
 }
-
 function deleteProduct(index) {
   if (confirm('¿Estás seguro de eliminar este producto?')) {
     const productName = products.value[index].name;
@@ -1302,7 +1327,6 @@ function deleteProduct(index) {
     });
   }
 }
-
 // Acciones para categorías
 const showCategoryModal = ref(false);
 const currentCategory = ref(null);
@@ -1311,7 +1335,6 @@ const categoryForm = ref({
   descripcion: '',
   activo: true
 });
-
 function openCategoryModal(category) {
   if (category) {
     currentCategory.value = category;
@@ -1330,26 +1353,19 @@ function openCategoryModal(category) {
   }
   showCategoryModal.value = true;
 }
-
 function closeCategoryModal() {
   showCategoryModal.value = false;
 }
-
 // FUNCIÓN ACTUALIZADA: Guardar categoría con conexión al backend
 async function saveCategory() {
   if (!categoryForm.value.nombre.trim()) {
     showToast('El nombre de la categoría no puede estar vacío', 'error');
     return;
   }
-  
-  if (categories.value.some(cat => cat.name === categoryForm.value.nombre && cat !== currentCategory.value)) {
-    showToast('Esta categoría ya existe', 'error');
-    return;
-  }
-  
+
   try {
     isLoading.value = true;
-    
+
     if (currentCategory.value) {
       // Actualizar categoría existente
       Object.assign(currentCategory.value, {
@@ -1357,7 +1373,7 @@ async function saveCategory() {
         description: categoryForm.value.descripcion,
         activo: categoryForm.value.activo
       });
-      
+
       notifications.value.push({
         id: notifications.value.length + 1,
         title: 'Categoría actualizada',
@@ -1366,7 +1382,7 @@ async function saveCategory() {
         read: false,
       });
     } else {
-      // Crear nueva categoría - CONEXIÓN AL BACKEND
+      // Crear nueva categoría en el BACKEND
       const categoryData = {
         nombre: categoryForm.value.nombre,
         descripcion: categoryForm.value.descripcion,
@@ -1388,16 +1404,24 @@ async function saveCategory() {
       }
 
       const result = await response.json();
-      
-      // Actualizar la lista local con la categoría creada
-      categories.value.push({ 
+
+      // ✅ CLAVE: Agregar al store global
+      store.addCategory({
+        id_categoria: result.id_categoria,
+        nombre: categoryForm.value.nombre,
+        descripcion: categoryForm.value.descripcion,
+        activo: categoryForm.value.activo
+      });
+
+      // También actualizar la lista local
+      categories.value.push({
         id: result.id_categoria,
-        name: categoryForm.value.nombre, 
+        name: categoryForm.value.nombre,
         description: categoryForm.value.descripcion,
         activo: categoryForm.value.activo,
-        productCount: 0 
+        productCount: 0
       });
-      
+
       notifications.value.push({
         id: notifications.value.length + 1,
         title: 'Categoría creada exitosamente',
@@ -1405,12 +1429,12 @@ async function saveCategory() {
         timestamp: new Date(),
         read: false,
       });
-      
+
       showToast('Categoría creada exitosamente', 'success');
     }
-    
+
     closeCategoryModal();
-    
+
   } catch (error) {
     console.error('Error al guardar categoría:', error);
     showToast(error.message || 'Error al guardar la categoría', 'error');
@@ -1434,37 +1458,39 @@ async function getCategoryIdByName(categoryName) {
     if (localCategory && localCategory.id) {
       return localCategory.id;
     }
-    
+   
     // Si no está en local, buscar en el backend
     const response = await fetch(`${API_URL}/categoria`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
       }
     });
-    
+   
     if (response.ok) {
       const categoriesFromBackend = await response.json();
       const category = categoriesFromBackend.find(cat => cat.nombre === categoryName);
       return category ? category.id_categoria : null;
     }
-    
+   
     return null;
   } catch (error) {
     console.error('Error al obtener ID de categoría:', error);
     return null;
   }
 }
-
-// FUNCIÓN AUXILIAR: Obtener nombre de categoría por ID
+/// FUNCIÓN AUXILIAR: Obtener nombre de categoría por ID (MEJORADA)
 function getCategoryNameById(categoryId) {
-  const category = categories.value.find(cat => cat.id === categoryId);
+  if (!categoryId) return 'Sin categoría';
+  
+  const id = Number(categoryId);
+  const category = categories.value.find(cat => Number(cat.id) === id);
+  
   return category ? category.name : 'Sin categoría';
 }
-
 function deleteCategory(index) {
   if (confirm('¿Estás seguro de eliminar esta categoría?')) {
     const categoryName = categories.value[index].name;
-    products.value = products.value.map(p => 
+    products.value = products.value.map(p =>
       p.category === categoryName ? { ...p, category: 'Sin categoría' } : p
     );
     categories.value.splice(index, 1);
@@ -1477,7 +1503,6 @@ function deleteCategory(index) {
     });
   }
 }
-
 function saveCategoryOrder() {
   console.log('Order updated:', categories.value);
   notifications.value.push({
@@ -1488,7 +1513,6 @@ function saveCategoryOrder() {
     read: false,
   });
 }
-
 // Acciones para usuarios
 function openUserModal(user) {
   if (user) {
@@ -1500,11 +1524,9 @@ function openUserModal(user) {
   }
   showUserModal.value = true;
 }
-
 function closeUserModal() {
   showUserModal.value = false;
 }
-
 function saveUser() {
   if (currentUser.value) {
     Object.assign(currentUser.value, userForm.value);
@@ -1527,7 +1549,6 @@ function saveUser() {
   }
   closeUserModal();
 }
-
 function deleteUser(index) {
   if (confirm('¿Estás seguro de eliminar este usuario?')) {
     const userName = users.value[index].name;
@@ -1541,7 +1562,6 @@ function deleteUser(index) {
     });
   }
 }
-
 function toggleUserStatus(user) {
   user.status = user.status === 'Activo' ? 'Inactivo' : 'Activo';
   notifications.value.push({
@@ -1552,17 +1572,14 @@ function toggleUserStatus(user) {
     read: false,
   });
 }
-
 // Acciones para pedidos
 function openOrderDetailsModal(order) {
   currentOrderForDetails.value = order;
   showOrderDetailsModal.value = true;
 }
-
 function closeOrderDetailsModal() {
   showOrderDetailsModal.value = false;
 }
-
 function openOrderUpdateModal(order) {
   currentOrderForUpdate.value = order;
   orderForm.value = {
@@ -1572,15 +1589,12 @@ function openOrderUpdateModal(order) {
   };
   showOrderUpdateModal.value = true;
 }
-
 function closeOrderUpdateModal() {
   showOrderUpdateModal.value = false;
 }
-
 function saveOrderStatus() {
   const oldStatus = currentOrderForUpdate.value.status;
   const newStatus = orderForm.value.newStatus;
-
   if (newStatus !== oldStatus && newStatus === 'Enviado') {
     const product = products.value.find(p => p.id === currentOrderForUpdate.value.productId);
     if (product && product.stock >= currentOrderForUpdate.value.quantity) {
@@ -1616,7 +1630,6 @@ function saveOrderStatus() {
   }
   closeOrderUpdateModal();
 }
-
 // Acciones para promociones
 const showPromotionModal = ref(false);
 const currentPromotion = ref(null);
@@ -1630,7 +1643,6 @@ const promotionForm = ref({
 const promotions = ref([
   { name: 'Oferta de Halloween', discount: 20, startDate: '2025-10-25', endDate: '2025-10-31', products: [1, 2] }
 ]);
-
 function openPromotionModal(promotion) {
   if (promotion) {
     currentPromotion.value = promotion;
@@ -1641,11 +1653,9 @@ function openPromotionModal(promotion) {
   }
   showPromotionModal.value = true;
 }
-
 function closePromotionModal() {
   showPromotionModal.value = false;
 }
-
 function savePromotion() {
   if (currentPromotion.value) {
     Object.assign(currentPromotion.value, promotionForm.value);
@@ -1668,7 +1678,6 @@ function savePromotion() {
   }
   closePromotionModal();
 }
-
 function deletePromotion(index) {
   if (confirm('¿Estás seguro de eliminar esta promoción?')) {
     const promotionName = promotions.value[index].name;
@@ -1682,35 +1691,29 @@ function deletePromotion(index) {
     });
   }
 }
-
 const filteredPromotions = computed(() =>
   promotions.value.filter(promo =>
     promo.name.toLowerCase().includes(promotionSearchQuery.value.toLowerCase())
   )
 );
 const promotionSearchQuery = ref('');
-
 // Acciones para notificaciones
 function markAsRead(index) {
   notifications.value[index].read = true;
 }
-
 function markAllAsRead() {
   notifications.value.forEach(notification => {
     notification.read = true;
   });
 }
-
 function deleteNotification(index) {
   notifications.value.splice(index, 1);
 }
-
 function clearAllNotifications() {
   if (confirm('¿Estás seguro de eliminar todas las notificaciones?')) {
     notifications.value = [];
   }
 }
-
 // Acciones para tickets
 const showTicketChatModal = ref(false);
 const currentTicket = ref(null);
@@ -1718,7 +1721,6 @@ const newMessage = ref('');
 const tickets = ref([
   { subject: 'Problema con pedido', userName: 'Juan Pérez', status: 'Abierto', createdAt: new Date(), messages: [{ text: 'No recibí mi pedido', timestamp: new Date(), sentBy: 'Juan Pérez' }] }
 ]);
-
 function openTicketChat(ticket) {
   currentTicket.value = { ...ticket, messages: [...ticket.messages] };
   showTicketChatModal.value = true;
@@ -1729,11 +1731,9 @@ function openTicketChat(ticket) {
     }
   }, 100);
 }
-
 function closeTicketChatModal() {
   showTicketChatModal.value = false;
 }
-
 function sendMessage() {
   if (newMessage.value.trim()) {
     currentTicket.value.messages.push({ text: newMessage.value, timestamp: new Date(), sentBy: userName.value });
@@ -1746,7 +1746,6 @@ function sendMessage() {
     }, 100);
   }
 }
-
 function toggleTicketStatus(ticket, index) {
   ticket.status = ticket.status === 'Abierto' ? 'Cerrado' : 'Abierto';
   notifications.value.push({
@@ -1757,7 +1756,6 @@ function toggleTicketStatus(ticket, index) {
     read: false,
   });
 }
-
 const ticketSearchQuery = ref('');
 const ticketStatusFilter = ref('');
 const filteredTickets = computed(() =>
@@ -1766,7 +1764,6 @@ const filteredTickets = computed(() =>
     (ticketStatusFilter.value === '' || ticket.status === ticketStatusFilter.value)
   )
 );
-
 // Acciones para logs
 const logs = ref([
   { message: 'Usuario Juan Pérez inició sesión', timestamp: new Date('2025-10-21T06:00:00'), user: 'Juan Pérez', type: 'login' },
@@ -1781,13 +1778,11 @@ const filteredLogs = computed(() =>
     (logFilter.value === '' || log.type === logFilter.value)
   )
 );
-
 // Acciones para métodos de pago
 const paymentConfig = ref({
   stripeKey: '',
   paypalId: ''
 });
-
 function savePaymentConfig() {
   notifications.value.push({
     id: notifications.value.length + 1,
@@ -1797,10 +1792,8 @@ function savePaymentConfig() {
     read: false,
   });
 }
-
 // Acciones para backup
 const backupFile = ref(null);
-
 function exportBackup() {
   isLoading.value = true;
   const data = { products: products.value, orders: orders.value, users: users.value, categories: categories.value, promotions: promotions.value, tickets: tickets.value, logs: logs.value };
@@ -1812,7 +1805,6 @@ function exportBackup() {
   link.click();
   isLoading.value = false;
 }
-
 function importBackup(event) {
   const file = event.target.files[0];
   if (file) {
@@ -1839,7 +1831,6 @@ function importBackup(event) {
     reader.readAsText(file);
   }
 }
-
 // Exportar a PDF (simulación básica con jsPDF)
 function exportProductsPDF() {
   const { jsPDF } = window.jspdf;
@@ -1850,7 +1841,6 @@ function exportProductsPDF() {
   });
   doc.save('productos.pdf');
 }
-
 function exportOrdersPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
@@ -1860,7 +1850,6 @@ function exportOrdersPDF() {
   });
   doc.save('pedidos.pdf');
 }
-
 function exportUsersPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
@@ -1870,7 +1859,6 @@ function exportUsersPDF() {
   });
   doc.save('usuarios.pdf');
 }
-
 // Exportar a CSV
 function exportProducts() {
   const csvData = products.value.map(product => ({
@@ -1891,7 +1879,6 @@ function exportProducts() {
   link.download = 'productos.csv';
   link.click();
 }
-
 function exportOrders() {
   const csvData = orders.value.map(order => ({
     ID: order.id,
@@ -1910,7 +1897,6 @@ function exportOrders() {
   link.download = 'pedidos.csv';
   link.click();
 }
-
 function exportUsers() {
   const csvData = users.value.map(user => ({
     Nombre: user.name,
@@ -1927,17 +1913,38 @@ function exportUsers() {
   link.download = 'usuarios.csv';
   link.click();
 }
-
 // Lifecycle hook
-onMounted(() => {
+// Lifecycle hook
+onMounted(async () => {
   checkAuthStatus();
-  loadCategoriesFromBackend(); // Cargar categorías al iniciar
-  loadProductsFromBackend(); // Cargar productos al iniciar
+  
+  // Cargar del store global
+  await store.fetchCategories();
+  await store.fetchProducts();
+  
+  // Sincronizar datos locales con el store
+  categories.value = store.categories.map(cat => ({
+    id: cat.id,
+    name: cat.nombre,
+    description: cat.description || '',
+    activo: cat.activo,
+    productCount: cat.productos ? cat.productos.length : 0
+  }));
+
+  products.value = store.products.map(prod => ({
+    id: prod.id,
+    name: prod.nombre,
+    image: prod.imagen_url || '',
+    price: `$${Number(prod.precio_venta).toLocaleString('es-CO')}`,
+    stock: prod.stock_actual,
+    category: store.getCategoryName(prod.id_categoria),
+    id_categoria: prod.id_categoria
+  }));
+
   checkLowStock();
   setTimeout(initCharts, 500);
   toggleTheme();
 });
-
 // FUNCIÓN NUEVA: Cargar categorías desde el backend
 async function loadCategoriesFromBackend() {
   try {
@@ -1946,74 +1953,77 @@ async function loadCategoriesFromBackend() {
         'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
       }
     });
-
+    
     if (response.ok) {
       const categoriesData = await response.json();
       
-      // Mapear los datos del backend al formato local
       categories.value = categoriesData.map(cat => ({
-        id: cat.id_categoria,
-        name: cat.nombre,
-        description: cat.descripcion || '',
+        id: Number(cat.id_categoria || cat.id),
+        name: cat.nombre || cat.name,  // ← Usar el nombre REAL
+        description: cat.descripcion || cat.description || '',
         activo: cat.activo !== undefined ? cat.activo : true,
         productCount: cat.productos ? cat.productos.length : 0
       }));
-
-      console.log('Categorías cargadas:', categories.value);
+      
+      console.log('✅ Categorías cargadas:', categories.value);
     }
   } catch (error) {
-    console.error('Error al cargar categorías:', error);
-    notifications.value.push({
-      id: notifications.value.length + 1,
-      title: 'Error al cargar categorías',
-      message: 'No se pudieron cargar las categorías desde el servidor.',
-      timestamp: new Date(),
-      read: false,
-    });
+    console.error('❌ Error al cargar categorías:', error);
   }
 }
 
 // FUNCIÓN NUEVA: Cargar productos desde el backend
 async function loadProductsFromBackend() {
   try {
-    const response = await fetch(`${API_URL}/productos`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-      }
-    });
+    const response = await fetch(`${API_URL}/productos`);
+    if (!response.ok) throw new Error('Error al cargar productos');
 
-    if (response.ok) {
-      const productsData = await response.json();
-      
-      // Mapear los datos del backend al formato local
-      products.value = productsData.map(prod => ({
+    const data = await response.json();
+    
+    console.log('📦 Datos del backend (productos):', data);
+
+    products.value = data.map(prod => {
+      const categoriaId = prod.id_categoria;
+      const nombreCategoria = getCategoryNameById(categoriaId);
+
+      console.log(`🔍 Producto "${prod.nombre}" - ID categoría: ${categoriaId} → "${nombreCategoria}"`);
+
+      return {
         id: prod.id_producto,
         name: prod.nombre,
-        brand: prod.marca || '',
         image: prod.imagen_url || '',
-        price: `${prod.precio_venta.toLocaleString('es-CO')}`,
+        price: `$${Number(prod.precio_venta).toLocaleString('es-CO')}`,
         stock: prod.stock_actual,
-        stock_minimo: prod.stock_minimo,
-        codigo_barras: prod.codigo_barras || '',
-        activo: prod.activo,
-        id_categoria: prod.id_categoria,
-        category: getCategoryNameById(prod.id_categoria),
-        description: prod.descripcion || ''
-      }));
+        id_categoria: categoriaId,
+        category: nombreCategoria
+      };
+    });
 
-      console.log('Productos cargados:', products.value);
-    }
-  } catch (error) {
-    console.error('Error al cargar productos:', error);
+    console.log('✅ Productos procesados:', products.value);
+
+  } catch (err) {
+    console.error('❌ Error al cargar productos:', err);
     notifications.value.push({
       id: notifications.value.length + 1,
       title: 'Error al cargar productos',
-      message: 'No se pudieron cargar los productos desde el servidor.',
+      message: err.message || 'No se pudieron cargar los productos desde el servidor.',
       timestamp: new Date(),
       read: false,
     });
   }
 }
+
+// Función para obtener productos por categoría
+function getProductsByCategory(categoryId) {
+  return products.value.filter(product => Number(product.id_categoria) === Number(categoryId));
+}
+
+// Computed para categorías filtradas
+const filteredCategories = computed(() => {
+  return categories.value.filter(category =>
+    category.name.toLowerCase().includes(categorySearchQuery.value.toLowerCase())
+  );
+});
 
 function formatDate(date) {
   return new Date(date).toLocaleString('es-CO', {
@@ -2024,7 +2034,6 @@ function formatDate(date) {
     minute: '2-digit',
   });
 }
-
 // Verificar stock bajo
 function checkLowStock() {
   products.value.forEach(product => {
@@ -2039,19 +2048,17 @@ function checkLowStock() {
     }
   });
 }
-
 function showToast(message, type) {
   console.log(`${type}: ${message}`);
 }
 </script>
-
 <style scoped>
 /* Layout principal */
 .main-layout {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: 
+  background:
     radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.15) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(255, 69, 0, 0.15) 0%, transparent 50%),
     radial-gradient(circle at 40% 40%, rgba(139, 69, 19, 0.2) 0%, transparent 50%),
@@ -2063,16 +2070,14 @@ function showToast(message, type) {
   transition: background 0.3s ease;
   font-size: 1.1rem;
 }
-
 .main-layout.light-mode {
-  background: 
+  background:
     radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(255, 69, 0, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 40% 40%, rgba(139, 69, 19, 0.1) 0%, transparent 50%),
     linear-gradient(135deg, #f0f0f0 0%, #d0d0d0 25%, #f0f0f0 50%, #e0e0e0 75%, #f0f0f0 100%);
   color: #333;
 }
-
 .background-overlay {
   position: fixed;
   top: 0;
@@ -2089,13 +2094,16 @@ function showToast(message, type) {
   background: rgba(20, 20, 20, 0.95);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255, 215, 0, 0.2);
-  padding: 1.5rem 2rem;
+  padding: clamp(0.6rem, 1.5vh, 1.2rem) clamp(0.8rem, 2vw, 1.5rem);
   position: sticky;
   top: 0;
   z-index: 100;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
-
 .navbar.light-mode {
   background: rgba(240, 240, 240, 0.95);
   border-bottom: 1px solid rgba(255, 215, 0, 0.1);
@@ -2103,100 +2111,104 @@ function showToast(message, type) {
 }
 .navbar-content {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  gap: clamp(1rem, 2vw, 2rem);
+  flex-wrap: wrap;
+  min-width: 0;
+  padding: 0;
 }
-
 .brand-title {
   color: #FFD700;
-  font-size: 3rem;
+  font-size: clamp(1.2rem, 3vw, 2.5rem);
   font-weight: 900;
   margin: 0;
-  letter-spacing: 3px;
-  text-shadow: 
+  margin-right: auto;
+  letter-spacing: clamp(0.5px, 0.2vw, 2px);
+  text-shadow:
     0 0 20px rgba(255, 215, 0, 0.5),
     0 0 40px rgba(255, 215, 0, 0.3);
   background: linear-gradient(135deg, #FFD700, #FF4500);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  white-space: nowrap;
+  min-width: 0;
+  flex-shrink: 0;
 }
-
 .brand-title.light-mode {
   color: #FF4500;
   text-shadow: none;
   background: none;
   -webkit-text-fill-color: #FF4500;
 }
-
 .nav-section {
   display: flex;
   align-items: center;
-  gap: 2rem;
+  gap: clamp(0.5rem, 1.2vw, 1.5rem);
+  flex-wrap: wrap;
+  min-width: 0;
+  flex-shrink: 1;
+  justify-content: flex-end;
 }
-
 .nav-links {
   display: flex;
-  gap: 1.5rem;
+  gap: clamp(0.5rem, 1vw, 1.5rem);
+  flex-wrap: wrap;
+  min-width: 0;
 }
-
 .nav-link {
   color: #e0e0e0;
   text-decoration: none;
   font-weight: 600;
-  font-size: 1rem;
-  padding: 0.5rem 1rem;
+  font-size: clamp(0.85rem, 1.5vw, 1rem);
+  padding: clamp(0.4rem, 0.8vw, 0.5rem) clamp(0.6rem, 1.2vw, 1rem);
   border-radius: 20px;
   transition: all 0.3s ease;
   position: relative;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  white-space: nowrap;
+  min-width: 0;
 }
-
 .nav-link.light-mode {
   color: #333;
 }
-
 .nav-link:hover {
   background: rgba(255, 215, 0, 0.1);
   color: #FFD700;
   animation: bounce 0.5s ease;
 }
-
 .nav-link.light-mode:hover {
   background: rgba(255, 215, 0, 0.1);
   color: #FF4500;
   animation: bounce 0.5s ease;
 }
-
 .notification-icon, .theme-icon {
-  font-size: 1.2rem;
+  font-size: clamp(1rem, 2vw, 1.2rem);
   transition: transform 0.3s ease;
 }
-
 .nav-link:hover .notification-icon,
 .nav-link:hover .theme-icon {
   transform: scale(1.2) rotate(15deg);
 }
-
 .notification-badge {
   background: #e53e3e;
   color: white;
   border-radius: 50%;
-  padding: 0.2rem 0.5rem;
-  font-size: 0.8rem;
+  padding: clamp(0.15rem, 0.3vw, 0.2rem) clamp(0.3rem, 0.6vw, 0.5rem);
+  font-size: clamp(0.7rem, 1.2vw, 0.8rem);
   position: absolute;
   top: -5px;
   right: -5px;
 }
-
 .animate-pulse {
   animation: pulse 1.5s infinite;
 }
-
 @keyframes pulse {
   0% {
     transform: scale(1);
@@ -2211,95 +2223,98 @@ function showToast(message, type) {
     box-shadow: 0 0 0 0 rgba(229, 62, 62, 0);
   }
 }
-
 @keyframes bounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
 }
-
 /* Usuario autenticado */
 .user-menu {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: clamp(0.5rem, 1vw, 1rem);
+  flex-wrap: wrap;
+  min-width: 0;
 }
-
 .user-menu.light-mode {
   color: #333;
 }
-
 .user-welcome {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   color: #FFD700;
-  font-size: 0.9rem;
+  font-size: clamp(0.7rem, 1.3vw, 0.85rem);
   font-weight: 600;
-  padding: 0.6rem 1rem;
+  padding: clamp(0.3rem, 0.8vw, 0.5rem) clamp(0.5rem, 1.2vw, 0.8rem);
   background: rgba(255, 215, 0, 0.1);
   border-radius: 20px;
   border: 1px solid rgba(255, 215, 0, 0.2);
+  white-space: nowrap;
+  min-width: 0;
+  max-width: 200px;
 }
-
 .user-welcome.light-mode {
   color: #FF4500;
   background: rgba(255, 69, 0, 0.1);
   border-color: rgba(255, 69, 0, 0.2);
 }
-
 .user-info {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  min-width: 0;
 }
-
+.welcome-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 120px;
+}
 .user-role {
-  font-size: 0.7rem;
+  font-size: clamp(0.65rem, 1.2vw, 0.7rem);
   color: rgba(255, 215, 0, 0.7);
   font-weight: 400;
 }
-
 .user-role.light-mode {
   color: rgba(255, 69, 0, 0.7);
 }
-
 .welcome-icon {
-  font-size: 1.1rem;
+  font-size: clamp(0.9rem, 1.8vw, 1.1rem);
   margin-right: 0.2rem;
+  flex-shrink: 0;
 }
-
 .logout-btn {
   background: linear-gradient(135deg, #e53e3e, #c53030);
   color: white;
   border: none;
-  padding: 0.8rem 1.2rem;
+  padding: clamp(0.4rem, 1vw, 0.6rem) clamp(0.6rem, 1.2vw, 1rem);
   border-radius: 25px;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: clamp(0.7rem, 1.3vw, 0.85rem);
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+  white-space: nowrap;
+  min-width: 0;
+  flex-shrink: 0;
 }
-
 .logout-btn:hover {
   transform: translateY(-2px) scale(1.05);
   box-shadow: 0 6px 20px rgba(229, 62, 62, 0.5);
   animation: pulseEffect 0.5s ease;
 }
-
 .logout-icon {
-  font-size: 1rem;
+  font-size: clamp(0.85rem, 1.6vw, 1rem);
+  flex-shrink: 0;
 }
-
 @keyframes pulseEffect {
   0% { transform: translateY(-2px) scale(1.05); }
   50% { transform: translateY(-4px) scale(1.1); }
   100% { transform: translateY(-2px) scale(1.05); }
 }
-
 /* Contenedor con scroll */
 .content-scroll {
   max-height: calc(100vh - 100px);
@@ -2308,28 +2323,22 @@ function showToast(message, type) {
   scrollbar-width: thin;
   scrollbar-color: #FFD700 rgba(255, 255, 255, 0.1);
 }
-
 .content-scroll.light-mode {
   scrollbar-color: #FF4500 rgba(255, 255, 255, 0.1);
 }
-
 .content-scroll::-webkit-scrollbar {
   width: 8px;
 }
-
 .content-scroll::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.1);
 }
-
 .content-scroll::-webkit-scrollbar-thumb {
   background: #FFD700;
   border-radius: 4px;
 }
-
 .content-scroll.light-mode::-webkit-scrollbar-thumb {
   background: #FF4500;
 }
-
 /* Sección del catálogo */
 .catalog-section {
   background: rgba(30, 30, 30, 0.9);
@@ -2340,18 +2349,15 @@ function showToast(message, type) {
   margin-bottom: 2rem;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
-
 .catalog-section.light-mode {
   background: rgba(240, 240, 240, 0.95);
   border-color: rgba(255, 69, 0, 0.2);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
-
 .section-header {
   text-align: center;
   margin-bottom: 2rem;
 }
-
 .section-title {
   color: #FFD700;
   font-size: 2rem;
@@ -2359,23 +2365,19 @@ function showToast(message, type) {
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
   margin: 0;
 }
-
 .section-title.light-mode {
   color: #FF4500;
   text-shadow: none;
 }
-
 .title-underline {
   width: 100px;
   height: 3px;
   background: #FFD700;
   margin: 0.5rem auto;
 }
-
 .title-underline.light-mode {
   background: #FF4500;
 }
-
 /* Dashboard */
 .dashboard-grid {
   display: grid;
@@ -2383,7 +2385,6 @@ function showToast(message, type) {
   gap: 1.5rem;
   margin-bottom: 3rem;
 }
-
 .stat-card {
   background: rgba(50, 50, 50, 0.9);
   border-radius: 10px;
@@ -2392,36 +2393,29 @@ function showToast(message, type) {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   transition: transform 0.3s ease;
 }
-
 .stat-card.light-mode {
   background: rgba(220, 220, 220, 0.9);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
-
 .stat-card:hover {
   transform: translateY(-5px);
 }
-
 .stat-card h3 {
   color: #e0e0e0;
   font-size: 1.1rem;
   margin-bottom: 0.5rem;
 }
-
 .stat-card.light-mode h3 {
   color: #333;
 }
-
 .stat-card p {
   color: #FFD700;
   font-size: 1.5rem;
   font-weight: 700;
 }
-
 .stat-card.light-mode p {
   color: #FF4500;
 }
-
 /* Charts */
 .charts-section {
   display: grid;
@@ -2429,29 +2423,24 @@ function showToast(message, type) {
   gap: 2rem;
   margin-bottom: 2rem;
 }
-
 .chart-card {
   background: rgba(40, 40, 40, 0.9);
   border-radius: 10px;
   padding: 1rem;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
-
 .chart-card.light-mode {
   background: rgba(230, 230, 230, 0.9);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
-
 .chart-card h3 {
   color: #FFD700;
   font-size: 1.3rem;
   margin-bottom: 1rem;
 }
-
 .chart-card.light-mode h3 {
   color: #FF4500;
 }
-
 /* Filtros Sidebar */
 .filters-sidebar {
   position: fixed;
@@ -2467,16 +2456,13 @@ function showToast(message, type) {
   transition: right 0.3s ease;
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
 }
-
 .filters-sidebar.light-mode {
   background: rgba(240, 240, 240, 0.95);
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
 }
-
 .filters-sidebar.active {
   right: 0;
 }
-
 .filters-toggle {
   position: absolute;
   left: -60px;
@@ -2491,42 +2477,34 @@ function showToast(message, type) {
   transition: all 0.3s ease;
   font-size: 1rem;
 }
-
 .filters-toggle.light-mode {
   background: #FF4500;
   color: white;
 }
-
 .filters-toggle:hover {
   transform: scale(1.05) translateX(-2px);
   animation: slideIn 0.5s ease;
 }
-
 .filters-content h3 {
   color: #FFD700;
   font-size: 1.4rem;
   margin-bottom: 1.5rem;
 }
-
 .filters-content.light-mode h3 {
   color: #FF4500;
 }
-
 .filter-group {
   margin-bottom: 1.5rem;
 }
-
 .filter-group label {
   color: #e0e0e0;
   font-size: 1.1rem;
   margin-bottom: 0.5rem;
   display: block;
 }
-
 .filter-group.light-mode label {
   color: #333;
 }
-
 .filter-group input,
 .filter-group select {
   width: 100%;
@@ -2536,14 +2514,12 @@ function showToast(message, type) {
   background: rgba(40, 40, 40, 0.5);
   color: #e0e0e0;
 }
-
 .filter-group.light-mode input,
 .filter-group.light-mode select {
   border-color: rgba(255, 69, 0, 0.2);
   background: rgba(230, 230, 230, 0.5);
   color: #333;
 }
-
 .apply-filters-btn,
 .clear-filters-btn {
   width: 100%;
@@ -2557,30 +2533,25 @@ function showToast(message, type) {
   margin-top: 0.5rem;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
-
 .apply-filters-btn {
   background: linear-gradient(135deg, #48bb78, #2f855a);
   color: white;
 }
-
 .clear-filters-btn {
   background: linear-gradient(135deg, #e53e3e, #c53030);
   color: white;
 }
-
 .apply-filters-btn:hover,
 .clear-filters-btn:hover {
   transform: translateY(-2px) scale(1.05);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   animation: bounce 0.5s ease;
 }
-
 @keyframes slideIn {
   0% { transform: translateX(0); }
   50% { transform: translateX(-5px); }
   100% { transform: translateX(0); }
 }
-
 /* Search Bar */
 .search-bar {
   display: flex;
@@ -2588,7 +2559,6 @@ function showToast(message, type) {
   margin-bottom: 1.5rem;
   flex-wrap: wrap;
 }
-
 .search-bar input,
 .search-bar select {
   flex: 1;
@@ -2599,14 +2569,12 @@ function showToast(message, type) {
   background: rgba(40, 40, 40, 0.5);
   color: #e0e0e0;
 }
-
 .search-bar.light-mode input,
 .search-bar.light-mode select {
   border-color: rgba(255, 69, 0, 0.2);
   background: rgba(230, 230, 230, 0.5);
   color: #333;
 }
-
 .add-btn,
 .export-btn {
   padding: 0.8rem 1.2rem;
@@ -2620,24 +2588,20 @@ function showToast(message, type) {
   transition: all 0.3s ease;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
-
 .add-btn {
   background: linear-gradient(135deg, #48bb78, #2f855a);
   color: white;
 }
-
 .export-btn {
   background: linear-gradient(135deg, #3182ce, #2b6cb0);
   color: white;
 }
-
 .add-btn:hover,
 .export-btn:hover {
   transform: translateY(-2px) scale(1.05);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   animation: bounce 0.5s ease;
 }
-
 /* Grillas */
 .products-grid,
 .categories-grid,
@@ -2650,7 +2614,6 @@ function showToast(message, type) {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
 }
-
 .product-card,
 .category-card,
 .promotion-card,
@@ -2664,7 +2627,6 @@ function showToast(message, type) {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
 }
-
 .product-card.light-mode,
 .category-card.light-mode,
 .promotion-card.light-mode,
@@ -2675,7 +2637,6 @@ function showToast(message, type) {
   background: rgba(230, 230, 230, 0.9);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
-
 .product-card:hover,
 .category-card:hover,
 .promotion-card:hover,
@@ -2685,7 +2646,6 @@ function showToast(message, type) {
 .log-card:hover {
   transform: translateY(-5px);
 }
-
 .card-image-container {
   position: relative;
   height: 200px;
@@ -2693,18 +2653,15 @@ function showToast(message, type) {
   border-radius: 15px;
   margin-bottom: 1.5rem;
 }
-
 .product-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.4s ease;
 }
-
 .product-card:hover .product-image {
   transform: scale(1.08);
 }
-
 .image-overlay {
   position: absolute;
   top: 0;
@@ -2713,7 +2670,6 @@ function showToast(message, type) {
   bottom: 0;
   background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.5) 100%);
 }
-
 .product-info,
 .category-info,
 .promotion-info,
@@ -2723,7 +2679,6 @@ function showToast(message, type) {
 .log-info {
   padding: 1.5rem;
 }
-
 .product-title,
 .category-title,
 .promotion-title,
@@ -2734,7 +2689,6 @@ function showToast(message, type) {
   color: #e0e0e0;
   margin-bottom: 1rem;
 }
-
 .product-title.light-mode,
 .category-title.light-mode,
 .promotion-title.light-mode,
@@ -2742,7 +2696,6 @@ function showToast(message, type) {
 .ticket-title.light-mode {
   color: #333;
 }
-
 .product-description,
 .category-description,
 .promotion-description,
@@ -2754,7 +2707,6 @@ function showToast(message, type) {
   margin-bottom: 1rem;
   line-height: 1.6;
 }
-
 .product-description.light-mode,
 .category-description.light-mode,
 .promotion-description.light-mode,
@@ -2763,13 +2715,13 @@ function showToast(message, type) {
 .log-message.light-mode {
   color: #666;
 }
-
+/* Admin Actions */
 /* Admin Actions */
 .admin-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  justify-content: space-evenly;
+  flex-wrap: nowrap; /* ← Cambiar de wrap a nowrap */
+  gap: 0.5rem; /* ← Reducir gap de 1rem a 0.5rem */
+  justify-content: space-between;
 }
 
 .edit-product-btn,
@@ -2782,19 +2734,20 @@ function showToast(message, type) {
   background: linear-gradient(135deg, #3182ce, #2b6cb0);
   color: white;
   border: none;
-  padding: 0.8rem 1.5rem;
-  border-radius: 25px;
+  padding: 0.5rem 0.8rem; /* ← Reducir padding de 0.8rem 1.5rem */
+  border-radius: 20px; /* ← Reducir de 25px a 20px */
   cursor: pointer;
-  font-weight: 700;
-  font-size: 1rem;
+  font-weight: 600; /* ← Cambiar de 700 a 600 */
+  font-size: 0.85rem; /* ← Reducir de 1rem a 0.85rem */
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.3rem; /* ← Reducir de 0.5rem */
   transition: all 0.3s ease;
   flex: 1;
-  min-width: 140px;
+  min-width: 90px; /* ← Reducir de 140px a 90px */
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(49, 130, 206, 0.3);
+  box-shadow: 0 2px 8px rgba(49, 130, 206, 0.3);
+  white-space: nowrap;
 }
 
 .edit-product-btn:hover,
@@ -2805,7 +2758,7 @@ function showToast(message, type) {
 .save-btn:hover,
 .cancel-btn:hover {
   transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 6px 20px rgba(49, 130, 206, 0.5);
+  box-shadow: 0 4px 15px rgba(49, 130, 206, 0.5);
   animation: bounce 0.5s ease;
 }
 
@@ -2813,44 +2766,48 @@ function showToast(message, type) {
   background: linear-gradient(135deg, #e53e3e, #c53030);
   color: white;
   border: none;
-  padding: 0.8rem 1.5rem;
-  border-radius: 25px;
+  padding: 0.5rem 0.8rem; /* ← Reducir padding */
+  border-radius: 20px; /* ← Reducir de 25px a 20px */
   cursor: pointer;
-  font-weight: 700;
-  font-size: 1rem;
+  font-weight: 600; /* ← Cambiar de 700 a 600 */
+  font-size: 0.85rem; /* ← Reducir de 1rem */
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.3rem; /* ← Reducir de 0.5rem */
   transition: all 0.3s ease;
   flex: 1;
-  min-width: 140px;
+  min-width: 90px; /* ← Reducir de 140px */
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+  box-shadow: 0 2px 8px rgba(229, 62, 62, 0.3);
+  white-space: nowrap;
 }
 
 .delete-btn:hover {
   transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 6px 20px rgba(229, 62, 62, 0.5);
+  box-shadow: 0 4px 15px rgba(229, 62, 62, 0.5);
   animation: pulseDelete 0.5s ease;
 }
 
+/* Iconos más pequeños */
+.edit-icon,
+.delete-icon,
+.stats-icon {
+  font-size: 0.9rem; /* ← Agregar esto para iconos más pequeños */
+}
 .status-btn.open {
   background: linear-gradient(135deg, #48bb78, #2f855a);
   box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
 }
-
 .status-btn.open:hover {
   transform: translateY(-2px) scale(1.05);
   box-shadow: 0 6px 20px rgba(72, 187, 120, 0.5);
   animation: bounce 0.5s ease;
 }
-
 @keyframes pulseDelete {
   0% { transform: translateY(-2px) scale(1.05); }
   50% { transform: translateY(-4px) scale(1.1); }
   100% { transform: translateY(-2px) scale(1.05); }
 }
-
 /* Notification Cards */
 .notification-card {
   background: rgba(40, 40, 40, 0.9);
@@ -2862,28 +2819,23 @@ function showToast(message, type) {
   position: relative;
   overflow: hidden;
 }
-
 .notification-card.light-mode {
   background: rgba(230, 230, 230, 0.9);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
-
 .notification-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
 }
-
 .notification-card.unread {
   background: linear-gradient(135deg, rgba(72, 187, 120, 0.2), rgba(0, 0, 0, 0.2));
   border: 2px solid #48bb78;
   animation: glow 1.5s ease-in-out infinite alternate;
 }
-
 .notification-card.unread.light-mode {
   background: linear-gradient(135deg, rgba(72, 187, 120, 0.2), rgba(255, 255, 255, 0.2));
   border-color: #48bb78;
 }
-
 @keyframes glow {
   from {
     box-shadow: 0 0 5px rgba(72, 187, 120, 0.2);
@@ -2892,7 +2844,6 @@ function showToast(message, type) {
     box-shadow: 0 0 15px rgba(72, 187, 120, 0.5);
   }
 }
-
 .notification-title {
   font-size: 1.4rem;
   color: #FFD700;
@@ -2901,34 +2852,28 @@ function showToast(message, type) {
   align-items: center;
   gap: 0.5rem;
 }
-
 .notification-title.light-mode {
   color: #FF4500;
 }
-
 .notification-message {
   font-size: 1.1rem;
   line-height: 1.6;
 }
-
 .notification-date {
   font-size: 0.9rem;
   color: #b0b0b0;
   margin-top: 1rem;
   text-align: right;
 }
-
 .notification-date.light-mode {
   color: #666;
 }
-
 .notification-actions {
   display: flex;
   gap: 1rem;
   margin-top: 1.5rem;
   justify-content: space-between;
 }
-
 .mark-read-btn,
 .delete-notification-btn {
   padding: 0.8rem 1.5rem;
@@ -2939,29 +2884,24 @@ function showToast(message, type) {
   transition: all 0.3s ease;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
-
 .mark-read-btn {
   background: linear-gradient(135deg, #48bb78, #2f855a);
   color: white;
 }
-
 .mark-read-btn:hover {
   transform: translateY(-2px) scale(1.05);
   box-shadow: 0 4px 10px rgba(72, 187, 120, 0.5);
   animation: bounce 0.5s ease;
 }
-
 .delete-notification-btn {
   background: linear-gradient(135deg, #e53e3e, #c53030);
   color: white;
 }
-
 .delete-notification-btn:hover {
   transform: translateY(-2px) scale(1.05);
   box-shadow: 0 4px 10px rgba(229, 62, 62, 0.5);
   animation: pulseDelete 0.5s ease;
 }
-
 /* Modal */
 .modal-overlay {
   position: fixed;
@@ -2975,7 +2915,6 @@ function showToast(message, type) {
   align-items: center;
   z-index: 200;
 }
-
 .modal-content {
   background: rgba(30, 30, 30, 0.95);
   border-radius: 15px;
@@ -2984,32 +2923,26 @@ function showToast(message, type) {
   max-width: 600px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
 }
-
 .modal-content.light-mode {
   background: rgba(245, 245, 245, 0.95);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
 }
-
 .large-modal {
   max-width: 800px;
 }
-
 .modal-content h2 {
   color: #FFD700;
   font-size: 1.8rem;
   margin-bottom: 1.5rem;
 }
-
 .modal-content.light-mode h2 {
   color: #FF4500;
 }
-
 .modal-content form {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
-
 .modal-content input,
 .modal-content select,
 .modal-content textarea {
@@ -3019,7 +2952,6 @@ function showToast(message, type) {
   background: rgba(40, 40, 40, 0.5);
   color: #e0e0e0;
 }
-
 .modal-content.light-mode input,
 .modal-content.light-mode select,
 .modal-content.light-mode textarea {
@@ -3027,31 +2959,26 @@ function showToast(message, type) {
   background: rgba(230, 230, 230, 0.5);
   color: #333;
 }
-
 .modal-actions {
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
 }
-
 .cancel-btn {
   background: linear-gradient(135deg, #a0aec0, #718096);
   border-radius: 25px;
   color: white;
 }
-
 .cancel-btn:hover {
   transform: translateY(-2px) scale(1.05);
   box-shadow: 0 4px 10px rgba(160, 174, 192, 0.5);
   animation: bounce 0.5s ease;
 }
-
 .chat-container {
   display: flex;
   flex-direction: column;
   height: 400px;
 }
-
 .chat-messages {
   flex-grow: 1;
   overflow-y: auto;
@@ -3060,44 +2987,36 @@ function showToast(message, type) {
   border-radius: 5px;
   margin-bottom: 1rem;
 }
-
 .chat-messages.light-mode {
   background: rgba(230, 230, 230, 0.9);
 }
-
 .chat-message {
   margin-bottom: 0.5rem;
   padding: 0.5rem;
   border-radius: 5px;
   max-width: 70%;
 }
-
 .chat-message.sent {
   background: #3182ce;
   margin-left: auto;
   color: white;
 }
-
 .chat-message p {
   margin: 0;
 }
-
 .message-time {
   font-size: 0.7rem;
   color: #b0b0b0;
   display: block;
   text-align: right;
 }
-
 .message-time.light-mode {
   color: #666;
 }
-
 .chat-input {
   display: flex;
   gap: 0.5rem;
 }
-
 .chat-input input {
   flex-grow: 1;
   padding: 0.5rem;
@@ -3106,19 +3025,16 @@ function showToast(message, type) {
   background: rgba(40, 40, 40, 0.5);
   color: #e0e0e0;
 }
-
 .chat-input.light-mode input {
   border-color: rgba(255, 69, 0, 0.2);
   background: rgba(230, 230, 230, 0.5);
   color: #333;
 }
-
 .order-details img {
   max-width: 100%;
   border-radius: 5px;
   margin-bottom: 1rem;
 }
-
 /* Footer */
 .footer {
   background: rgba(10, 10, 10, 0.95);
@@ -3131,7 +3047,6 @@ function showToast(message, type) {
   box-sizing: border-box;
   flex-shrink: 0;
 }
-
 .footer::before {
   content: '';
   position: absolute;
@@ -3143,27 +3058,23 @@ function showToast(message, type) {
   background-size: 400% 400%;
   animation: shimmer 3s ease-in-out infinite;
 }
-
 @keyframes shimmer {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
 }
-
 .footer-content {
-  max-width: 1600px; /* Increased max-width for a wider footer */
+  max-width: 1600px;
   margin: 0 auto;
   width: 100%;
-  padding: 0 3rem; /* Increased padding for better edge spacing */
+  padding: 0 3rem;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
-
 .footer-header {
   text-align: center;
   margin-bottom: 3rem;
 }
-
 .footer-title {
   color: #FFD700;
   font-size: clamp(2rem, 5vw, 3rem);
@@ -3171,16 +3082,14 @@ function showToast(message, type) {
   margin: 0;
   text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
 }
-
 .contact-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
   padding: 0 1rem;
   width: 100%;
-  max-width: 1400px; /* Increased max-width for wider grid */
+  max-width: 1400px;
 }
-
 .contact-item {
   background: rgba(20, 20, 20, 0.8);
   backdrop-filter: blur(10px);
@@ -3195,26 +3104,22 @@ function showToast(message, type) {
   flex-direction: column;
   justify-content: center;
 }
-
 .contact-item:hover {
   border-color: rgba(255, 215, 0, 0.5);
   transform: translateY(-5px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
-
 .contact-icon {
   font-size: clamp(2.5rem, 6vw, 3.5rem);
   margin-bottom: 1.5rem;
   filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
 }
-
 .contact-details h4 {
   color: #FFD700;
   font-size: clamp(1.2rem, 3vw, 1.5rem);
   font-weight: 600;
   margin-bottom: 1rem;
 }
-
 .contact-details address,
 .contact-details a {
   color: rgba(255, 255, 255, 0.8);
@@ -3224,12 +3129,10 @@ function showToast(message, type) {
   transition: color 0.3s ease;
   font-size: clamp(1rem, 2.5vw, 1.2rem);
 }
-
 .contact-details a:hover {
   color: #FFD700;
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
 }
-
 /* Loading Overlay */
 .loading-overlay {
   position: fixed;
@@ -3243,7 +3146,6 @@ function showToast(message, type) {
   align-items: center;
   z-index: 1000;
 }
-
 .loading-spinner {
   width: 50px;
   height: 50px;
@@ -3252,26 +3154,21 @@ function showToast(message, type) {
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
-
 .loading-spinner.light-mode {
   border-top-color: #FF4500;
 }
-
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
-
 .loading-overlay p {
   color: #e0e0e0;
   margin-top: 1rem;
   font-size: 1.2rem;
 }
-
 .loading-overlay.light-mode p {
   color: #333;
 }
-
 /* Progress Bar */
 .progress-bar {
   width: 100%;
@@ -3280,141 +3177,35 @@ function showToast(message, type) {
   overflow: hidden;
   margin-top: 1rem;
 }
-
 .progress {
   height: 10px;
   background: #FFD700;
   transition: width 0.3s ease;
 }
-
 .progress.light-mode {
   background: #FF4500;
 }
-
 .notification-card.unread {
   background: rgba(72, 187, 120, 0.1);
   border-left: 4px solid #48bb78;
 }
-
 .notification-card.unread.light-mode {
   background: rgba(72, 187, 120, 0.1);
   border-left-color: #48bb78;
 }
-
 .log-card.critical {
   background: rgba(229, 62, 62, 0.1);
   border-left: 4px solid #e53e3e;
 }
-
 .log-card.critical.light-mode {
   background: rgba(229, 62, 62, 0.1);
   border-left-color: #e53e3e;
 }
-
 /* Improved Notification Styles */
 .notifications-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 2rem;
-}
-
-.notification-card {
-  background: rgba(40, 40, 40, 0.9);
-  border-radius: 15px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-
-.notification-card.light-mode {
-  background: rgba(230, 230, 230, 0.9);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.notification-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-}
-
-.notification-card.unread {
-  border: 2px solid #48bb78;
-  animation: glow 1.5s ease-in-out infinite alternate;
-}
-
-.notification-card.unread.light-mode {
-  border-color: #48bb78;
-}
-
-.notification-title {
-  font-size: 1.4rem;
-  color: #FFD700;
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.notification-title.light-mode {
-  color: #FF4500;
-}
-
-.notification-message {
-  font-size: 1.1rem;
-  line-height: 1.6;
-}
-
-.notification-date {
-  font-size: 0.9rem;
-  color: #b0b0b0;
-  margin-top: 1rem;
-  text-align: right;
-}
-
-.notification-date.light-mode {
-  color: #666;
-}
-
-.notification-actions {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
-  justify-content: space-between;
-}
-
-.mark-read-btn,
-.delete-notification-btn {
-  padding: 0.8rem 1.5rem;
-  border-radius: 25px;
-  font-size: 1rem;
-  font-weight: 600;
-  flex: 1;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-.mark-read-btn {
-  background: linear-gradient(135deg, #48bb78, #2f855a);
-  color: white;
-}
-
-.mark-read-btn:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 4px 10px rgba(72, 187, 120, 0.5);
-  animation: bounce 0.5s ease;
-}
-
-.delete-notification-btn {
-  background: linear-gradient(135deg, #e53e3e, #c53030);
-  color: white;
-}
-
-.delete-notification-btn:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 4px 10px rgba(229, 62, 62, 0.5);
-  animation: pulseDelete 0.5s ease;
 }
 /* Métodos de Pago */
 .payment-methods-section {
@@ -3427,18 +3218,15 @@ function showToast(message, type) {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
 }
-
 .payment-methods-section.light-mode {
   background: rgba(240, 240, 240, 0.95);
   border-color: rgba(255, 69, 0, 0.2);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
-
 .payment-header {
   text-align: center;
   margin-bottom: 2rem;
 }
-
 .payment-title {
   color: #FFD700;
   font-size: 2rem;
@@ -3446,12 +3234,10 @@ function showToast(message, type) {
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
   margin: 0;
 }
-
 .payment-title.light-mode {
   color: #FF4500;
   text-shadow: none;
 }
-
 .payment-form {
   display: flex;
   flex-direction: column;
@@ -3461,29 +3247,24 @@ function showToast(message, type) {
   border-radius: 10px;
   border: 1px solid rgba(255, 215, 0, 0.1);
 }
-
 .payment-form.light-mode {
   background: rgba(230, 230, 230, 0.9);
   border-color: rgba(255, 69, 0, 0.1);
 }
-
 .form-group {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
-
 .form-group label {
   color: #e0e0e0;
   font-size: 1.1rem;
   font-weight: 600;
   text-align: left;
 }
-
 .form-group.light-mode label {
   color: #333;
 }
-
 .form-group input {
   padding: 0.8rem;
   border-radius: 5px;
@@ -3493,24 +3274,20 @@ function showToast(message, type) {
   font-size: 1rem;
   transition: all 0.3s ease;
 }
-
 .form-group.light-mode input {
   border-color: rgba(255, 69, 0, 0.2);
   background: rgba(220, 220, 220, 0.5);
   color: #333;
 }
-
 .form-group input:focus {
   border-color: #FFD700;
   box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
   outline: none;
 }
-
 .form-group.light-mode input:focus {
   border-color: #FF4500;
   box-shadow: 0 0 5px rgba(255, 69, 0, 0.5);
 }
-
 .save-btn {
   background: linear-gradient(135deg, #48bb78, #2f855a);
   color: white;
@@ -3524,21 +3301,17 @@ function showToast(message, type) {
   box-shadow: 0 2px 5px rgba(72, 187, 120, 0.3);
   align-self: flex-end;
 }
-
 .save-btn:hover {
   transform: translateY(-2px) scale(1.05);
   box-shadow: 0 4px 10px rgba(72, 187, 120, 0.5);
   animation: bounce 0.5s ease;
 }
-
 .payment-methods-section.light-mode .save-btn {
   background: linear-gradient(135deg, #48bb78, #2f855a);
 }
-
 .payment-methods-section.light-mode .save-btn:hover {
   background: linear-gradient(135deg, #2f855a, #48bb78);
 }
-
 /* Backup y Restore */
 .backup-restore-section {
   background: rgba(30, 30, 30, 0.9);
@@ -3550,18 +3323,15 @@ function showToast(message, type) {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
 }
-
 .backup-restore-section.light-mode {
   background: rgba(240, 240, 240, 0.95);
   border-color: rgba(255, 69, 0, 0.2);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
-
 .backup-header {
   text-align: center;
   margin-bottom: 2rem;
 }
-
 .backup-title {
   color: #FFD700;
   font-size: 2rem;
@@ -3569,19 +3339,16 @@ function showToast(message, type) {
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
   margin: 0;
 }
-
 .backup-title.light-mode {
   color: #FF4500;
   text-shadow: none;
 }
-
 .backup-actions {
   display: flex;
   gap: 1.5rem;
   justify-content: center;
   margin-top: 1.5rem;
 }
-
 .backup-actions .export-btn,
 .backup-actions .add-btn {
   padding: 0.8rem 1.5rem;
@@ -3596,43 +3363,523 @@ function showToast(message, type) {
   transition: all 0.3s ease;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
-
 .backup-actions .export-btn {
   background: linear-gradient(135deg, #3182ce, #2b6cb0);
   color: white;
 }
-
 .backup-actions .add-btn {
   background: linear-gradient(135deg, #48bb78, #2f855a);
   color: white;
 }
-
 .backup-actions .export-btn:hover,
 .backup-actions .add-btn:hover {
   transform: translateY(-2px) scale(1.05);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   animation: bounce 0.5s ease;
 }
-
 .backup-actions input[type="file"] {
   display: none;
 }
-
-.progress-bar {
-  width: 100%;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 5px;
+.nav-tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.5rem;
+  background: rgba(30, 30, 30, 0.5);
+  border-radius: 30px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 215, 0, 0.3) transparent;
+  max-width: 100%;
+  min-width: 0;
+}
+.nav-tabs::-webkit-scrollbar {
+  height: 4px;
+}
+.nav-tabs::-webkit-scrollbar-thumb {
+  background: rgba(255, 215, 0, 0.3);
+  border-radius: 2px;
+}
+.nav-tab {
+  background: rgba(40, 40, 40, 0.9);
+  color: #e0e0e0;
+  border: 2px solid transparent;
+  padding: clamp(0.5rem, 1vw, 0.7rem) clamp(0.8rem, 1.5vw, 1.2rem);
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: clamp(0.8rem, 1.5vw, 0.95rem);
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  position: relative;
   overflow: hidden;
-  margin-top: 1rem;
+  min-width: max-content;
+  flex-shrink: 0;
+}
+.nav-tab::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+.nav-tab:hover::before {
+  left: 100%;
+}
+.nav-tab:hover {
+  background: rgba(60, 60, 60, 1);
+  border-color: rgba(255, 215, 0, 0.5);
+  color: #FFD700;
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+}
+.nav-tab.active {
+  background: linear-gradient(135deg, #FFD700 0%, #FF4500 100%);
+  color: #1a1a1a;
+  border-color: transparent;
+  box-shadow:
+    0 4px 15px rgba(255, 215, 0, 0.6),
+    0 0 20px rgba(255, 215, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+  font-weight: 700;
+}
+.nav-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 3px;
+  background: #1a1a1a;
+  border-radius: 2px;
+}
+.nav-tab.light-mode {
+  background: rgba(220, 220, 220, 0.9);
+  color: #333;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.nav-tab.light-mode:hover {
+  background: rgba(240, 240, 240, 1);
+  border-color: rgba(255, 69, 0, 0.5);
+  color: #FF4500;
+  box-shadow: 0 4px 15px rgba(255, 69, 0, 0.3);
+}
+.nav-tab.active.light-mode {
+  background: linear-gradient(135deg, #FF4500 0%, #FFD700 100%);
+  color: #fff;
+  box-shadow:
+    0 4px 15px rgba(255, 69, 0, 0.6),
+    0 0 20px rgba(255, 69, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+/* Media queries mejoradas */
+@media (max-width: 1024px) {
+  .navbar-content {
+    gap: 1rem;
+  }
+ 
+  .brand-title {
+    font-size: clamp(1.2rem, 3vw, 2rem);
+  }
+ 
+  .nav-section {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+@media (max-width: 768px) {
+  .navbar {
+    padding: 1rem;
+  }
+ 
+  .navbar-content {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+ 
+  .brand-title {
+    text-align: center;
+    font-size: 1.5rem;
+  }
+ 
+  .nav-section {
+    flex-direction: column;
+    gap: 1rem;
+  }
+ 
+  .nav-tabs {
+    order: -1;
+    width: 100%;
+  }
+ 
+  .nav-links, .user-menu {
+    width: 100%;
+    justify-content: center;
+  }
+ 
+  .user-welcome {
+    flex: 1;
+    justify-content: center;
+  }
+ 
+  .logout-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+/* Sección de categoría con productos */
+.category-section-wrapper {
+  background: rgba(30, 30, 30, 0.9);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 15px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
-.progress {
-  height: 10px;
-  background: #FFD700;
-  transition: width 0.3s ease;
+.category-section-wrapper.light-mode {
+  background: rgba(240, 240, 240, 0.95);
+  border-color: rgba(255, 69, 0, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.progress.light-mode {
-  background: #FF4500;
+/* Header de categoría */
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  border-bottom: 3px solid rgba(255, 215, 0, 0.4);
+}
+
+.category-info-header {
+  flex: 1;
+}
+
+.category-title-large {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #FFD700;
+  margin: 0 0 0.5rem 0;
+  text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+}
+
+.category-title-large.light-mode {
+  color: #FF4500;
+  text-shadow: none;
+}
+
+.category-product-count {
+  font-size: 1.2rem;
+  color: #b0b0b0;
+  margin: 0;
+}
+
+.category-product-count.light-mode {
+  color: #666;
+}
+
+.category-actions-header {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Productos dentro de categoría */
+.products-in-category {
+  margin-top: 1.5rem;
+}
+
+/* Productos dentro de categoría - usar mismos estilos que productos normales */
+/* Productos dentro de categoría - tarjetas más pequeñas */
+/* Productos dentro de categoría - tarjetas más compactas y juntas */
+/* Productos dentro de categoría - grid compacto */
+/* Productos dentro de categoría - tarjetas más pequeñas */
+/* Productos dentro de categoría - tarjetas pequeñas con imágenes completas */
+/* Productos dentro de categoría - tarjetas delgadas y altas */
+/* Productos dentro de categoría - tarjetas con mejor proporción */
+.products-in-category .products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* ← Aumentar de 180px a 200px */
+  gap: 1.2rem; /* ← Aumentar gap de 1rem a 1.2rem */
+  width: 100%;
+}
+
+.products-in-category .product-card {
+  background: rgba(40, 40, 40, 0.9);
+  border-radius: 12px; /* ← Aumentar de 10px a 12px */
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  max-width: 250px; /* ← Aumentar de 220px a 250px */
+  margin: 0 auto;
+}
+
+.products-in-category .product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+}
+
+.products-in-category .card-image-container {
+  position: relative;
+  width: 100%;
+  height: 180px; /* ← Reducir de 200px a 180px para compensar */
+  overflow: hidden;
+  flex-shrink: 0;
+  background: linear-gradient(to bottom, #f5f5f5, #e8e8e8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.products-in-category .product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 0.4s ease;
+  padding: 0.8rem;
+}
+
+.products-in-category .product-card:hover .product-image {
+  transform: scale(1.05);
+}
+
+.products-in-category .image-overlay {
+  display: none;
+}
+
+.products-in-category .product-info {
+  padding: 1rem; /* ← Aumentar de 0.8rem a 1rem */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 160px; /* ← Reducir de 180px a 160px */
+}
+
+.products-in-category .product-title {
+  font-size: 1rem; /* ← Aumentar de 0.95rem a 1rem */
+  font-weight: 700;
+  color: #e0e0e0;
+  margin-bottom: 0.5rem;
+  line-height: 1.3;
+  min-height: 2.6em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.products-in-category .product-description {
+  font-size: 0.85rem; /* ← Aumentar de 0.8rem a 0.85rem */
+  color: #b0b0b0;
+  margin-bottom: 0.5rem;
+  line-height: 1.3;
+}
+
+.products-in-category .admin-user-view {
+  margin-top: auto;
+}
+
+.products-in-category .admin-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem; /* ← Aumentar de 0.6rem a 0.7rem */
+}
+
+.products-in-category .price-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem; /* ← Aumentar de 0.5rem a 0.6rem */
+  background: rgba(255, 215, 0, 0.1);
+  border-radius: 6px;
+}
+
+.products-in-category .price-label {
+  color: #e0e0e0;
+  font-weight: 600;
+  font-size: 0.85rem; /* ← Aumentar de 0.8rem */
+}
+
+.products-in-category .price-value {
+  color: #FFD700;
+  font-size: 1rem; /* ← Aumentar de 0.95rem a 1rem */
+  font-weight: 700;
+}
+
+.products-in-category .admin-actions {
+  display: flex;
+  gap: 0.6rem; /* ← Aumentar de 0.4rem a 0.6rem */
+  flex-wrap: nowrap;
+}
+
+.products-in-category .edit-product-btn,
+.products-in-category .delete-btn {
+  padding: 0.6rem 0.8rem; /* ← Aumentar padding */
+  font-size: 0.85rem; /* ← Aumentar de 0.75rem a 0.85rem */
+  min-width: 80px; /* ← Aumentar de 60px a 80px */
+  flex: 1;
+  border-radius: 20px;
+}
+
+.products-in-category .edit-icon,
+.products-in-category .delete-icon {
+  font-size: 0.85rem; /* ← Aumentar de 0.75rem */
+}
+
+.products-in-category .edit-product-btn,
+.products-in-category .delete-btn {
+  padding: 0.5rem 0.8rem;
+  font-size: 0.85rem;
+  min-width: 85px;
+}
+
+.products-in-category .edit-icon,
+.products-in-category .delete-icon {
+  font-size: 0.85rem;
+}
+
+.no-products-message {
+  text-align: center;
+  padding: 3rem;
+  background: rgba(40, 40, 40, 0.5);
+  border-radius: 10px;
+  border: 2px dashed rgba(255, 215, 0, 0.3);
+}
+
+.no-products-message.light-mode {
+  background: rgba(230, 230, 230, 0.5);
+  border-color: rgba(255, 69, 0, 0.3);
+}
+
+.no-products-message p {
+  color: #b0b0b0;
+  font-size: 1.3rem;
+  margin: 0;
+}
+
+.no-products-message.light-mode p {
+  color: #666;
+}
+
+.no-categories-message {
+  text-align: center;
+  padding: 3rem;
+  color: #b0b0b0;
+  font-size: 1.3rem;
+}
+
+.no-categories-message.light-mode {
+  color: #666;
+}
+@media (max-width: 480px) {
+  .navbar {
+    padding: 0.8rem;
+  }
+ 
+  .brand-title {
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+  }
+ 
+  .nav-tab {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+  }
+ 
+  .user-welcome,
+  .logout-btn {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.8rem;
+  }
+ 
+  .welcome-text {
+    max-width: 100px;
+  }
+
+ 
+/* Sección de categoría */
+.category-section-wrapper {
+  background: rgba(30, 30, 30, 0.9);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 15px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Header de categoría */
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  border-bottom: 3px solid rgba(255, 215, 0, 0.4);
+}
+
+.category-info-header {
+  flex: 1;
+}
+
+.category-title-large {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #FFD700;
+  margin: 0 0 0.5rem 0;
+  text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+}
+
+.category-product-count {
+  font-size: 1.2rem;
+  color: #b0b0b0;
+  margin: 0;
+}
+
+.category-actions-header {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Productos dentro de categoría */
+.products-in-category {
+  margin-top: 1.5rem;
+}
+
+.no-products-message {
+  text-align: center;
+  padding: 3rem;
+  background: rgba(40, 40, 40, 0.5);
+  border-radius: 10px;
+  border: 2px dashed rgba(255, 215, 0, 0.3);
+}
+
+.no-products-message p {
+  color: #b0b0b0;
+  font-size: 1.3rem;
+  margin: 0;
+}
+
+.no-categories-message {
+  text-align: center;
+  padding: 3rem;
+  color: #b0b0b0;
+  font-size: 1.3rem;
+}
 }
 </style>

@@ -1,14 +1,16 @@
 {
   "extends": "@vue/tsconfig/tsconfig.web.json",
-  "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
+  "include": ["env.d.ts", "src/**/*"],
   "compilerOptions": {
     "preserveValueImports": false,
     "importsNotUsedAsValues": "remove",
-    "verbatimModuleSyntax": true,
+    "verbatimModuleSyntax": false, // Cambiar a false para evitar conflictos
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     },
-    "allowJs": true
+    "allowJs": true,
+    "moduleResolution": "node", // Asegurar resolución de módulos
+    "esModuleInterop": true // Mejor compatibilidad con ES Modules
   }
 }

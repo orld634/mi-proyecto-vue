@@ -11,6 +11,13 @@ const MainRoutes = {
       path: '/catalogo',
       component: () => import('@/views/pages/Catalogo.vue')
     },
+
+    {
+      name: 'promociones',
+      path: '/promociones',
+      component: () => import('@/views/pages/promociones.vue'),
+      
+    }, 
     {
       name: 'admin',
       path: '/admin',
@@ -21,6 +28,8 @@ const MainRoutes = {
         layout: 'auth' // Layout específico para autenticación
       }
     }, 
+
+    
 
 
     {

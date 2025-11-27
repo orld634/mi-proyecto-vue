@@ -11,18 +11,18 @@
     
     <nav class="navbar">
       <div class="navbar-content">
-        <h1 class="brand-title">BRAZZINO'S</h1>
+        <h1 class="brand-title">Brindis Express</h1>
         <div class="nav-section">
           <div class="nav-links">
             <router-link to="/catalogo" class="nav-link">
               <span class="nav-icon">📋</span>
               Catálogo
             </router-link>
-            <a href='#promociones' class="nav-link">
+            <router-link to="/promociones" class="nav-link">
               <span class="nav-icon">🎯</span>
               Promociones
-            </a>
-            <a href='#politica' class="nav-link">
+            </router-link>
+            <a href='#politica' class="nav-link" @click.prevent="toggleTerms">
               <span class="nav-icon">📋</span>
               Política
             </a>
@@ -53,128 +53,284 @@
       </div>
     </nav>
 
-    <!-- Carrusel Hero -->
-    <div class="hero-carousel">
-      <div class="carousel-container">
-        <div
-          v-for="(img, index) in imagenes"
-          :key="index"
-          :class="['carousel-slide', { active: index === actual }]"
-          :style="{ backgroundImage: `url(${img})` }"
-        >
-          <div class="slide-overlay"></div>
-          <div class="slide-content">
-            <h2 class="slide-title">BRAZZINO'S</h2>
-            <p class="slide-subtitle">Experiencia Premium en Bebidas</p>
+    <!-- Main content (hidden when terms are shown) -->
+    <div v-if="!showTerms" class="main-content">
+      <!-- Carrusel Hero -->
+      <div class="hero-carousel">
+        <div class="carousel-container">
+          <div
+            v-for="(img, index) in imagenes"
+            :key="index"
+            :class="['carousel-slide', { active: index === actual }]"
+            :style="{ backgroundImage: `url(${img})` }"
+          >
+            <div class="slide-overlay"></div>
+            <div class="slide-content">
+              <h2 class="slide-title">Brindis Express</h2>
+              <p class="slide-subtitle">Experiencia Premium en Bebidas</p>
+            </div>
+          </div>
+          
+          <div class="carousel-controls">
+            <button @click="anterior" class="carousel-btn prev">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button @click="siguiente" class="carousel-btn next">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="carousel-indicators">
+            <button
+              v-for="(img, index) in imagenes"
+              :key="index"
+              @click="actual = index"
+              :class="['indicator', { active: index === actual }]"
+            ></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Secciones de información -->
+      <div class="content-sections">
+        <div class="info-card">
+          <div class="card-header">
+            <h2 class="card-title">🥃 Sobre Nosotros</h2>
+          </div>
+          <div class="card-content">
+            <p>
+              En <strong>BRAZZINO'S</strong> nos apasiona ofrecer una experiencia única en bebidas. 
+              Nuestro catálogo está cuidadosamente seleccionado para complacer a los paladares más exigentes.
+            </p>
+            <p>
+              Explora nuestra amplia variedad y descubre tu nueva favorita. <em>¡Salud!</em>
+            </p>
+          </div>
+        </div>
+
+        <div class="info-card">
+          <div class="card-header">
+            <h2 class="card-title">🎯 ¿Cuál es nuestra misión?</h2>
+          </div>
+          <div class="card-content">
+            <p>
+              En <strong>BRAZZINO'S</strong> tenemos como misión garantizar un excelente servicio en el ámbito 
+              de las ventas económicas en este tipo de industrias al contar con una disponibilidad estable.
+            </p>
+            <p>
+              Con mucho gusto colaboraremos con diversas empresas famosas referentes a estos servicios 
+              para poder así garantizar un crecimiento exponencial mutuo para ambas partes.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista previa del catálogo -->
+      <div id="catalogo-preview" class="catalog-section">
+        <div class="section-header">
+          <h2 class="section-title">✨ Nuestros Productos Destacados</h2>
+          <div class="title-underline"></div>
+        </div>
+        
+        <div class="products-grid">
+          <div class="product-card" v-for="(img, index) in imagenesCatalogo.slice(0, 3)" :key="index">
+            <div class="card-image-container">
+              <div class="discount-badge">20% dto</div>
+              <img :src="img.src" :alt="img.alt" class="product-image" />
+              <div class="image-overlay"></div>
+            </div>
+            
+            <div class="product-info">
+              <h3 class="product-title">{{ img.titulo }}</h3>
+              <p class="product-description">{{ img.descripcion }}</p>
+              
+              <!-- Mostrar precio solo a usuarios autenticados -->
+              <div v-if="isAuthenticated" class="product-actions">
+                <div class="price-display">
+                  <span class="price-label">Precio:</span>
+                  <span class="price-value">{{ img.precio }}</span>
+                </div>
+                <button class="add-to-cart-btn" @click="addToCart(img)">
+                  <span class="cart-icon">🛒</span>
+                  <span>Agregar al Carrito</span>
+                </button>
+              </div>
+              
+              <div v-else class="login-prompt">
+                <router-link to="/login" class="login-prompt-btn">
+                  <span class="lock-icon">🔒</span>
+                  <span>Inicia sesión para ver precios</span>
+                </router-link>
+              </div>
+            </div>
           </div>
         </div>
         
-        <div class="carousel-controls">
-          <button @click="anterior" class="carousel-btn prev">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-          <button @click="siguiente" class="carousel-btn next">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-        </div>
-
-        <div class="carousel-indicators">
-          <button
-            v-for="(img, index) in imagenes"
-            :key="index"
-            @click="actual = index"
-            :class="['indicator', { active: index === actual }]"
-          ></button>
+        <div class="catalog-footer">
+          <router-link to="/catalogo" class="view-catalog-btn">
+            <span class="catalog-icon">📖</span>
+            <span>Ver Catálogo Completo</span>
+          </router-link>
         </div>
       </div>
     </div>
 
-    <!-- Secciones de información -->
-    <div class="content-sections">
-      <div class="info-card">
-        <div class="card-header">
-          <h2 class="card-title">🥃 Sobre Nosotros</h2>
+    <!-- Sección de Términos y Condiciones (shown only when toggled) -->
+    <section v-if="showTerms" id="terminos" class="terms-section">
+      <button class="close-modal-btn" @click="toggleTerms">×</button>
+      <Transition name="terms-header" appear>
+        <div class="section-header">
+          <h2 class="section-title">⚖️ Términos y Condiciones</h2>
+          <div class="title-underline"></div>
         </div>
-        <div class="card-content">
-          <p>
-            En <strong>BRAZZINO'S</strong> nos apasiona ofrecer una experiencia única en bebidas. 
-            Nuestro catálogo está cuidadosamente seleccionado para complacer a los paladares más exigentes.
-          </p>
-          <p>
-            Explora nuestra amplia variedad y descubre tu nueva favorita. <em>¡Salud!</em>
-          </p>
-        </div>
-      </div>
-
-      <div class="info-card">
-        <div class="card-header">
-          <h2 class="card-title">🎯 ¿Cuál es nuestra misión?</h2>
-        </div>
-        <div class="card-content">
-          <p>
-            En <strong>BRAZZINO'S</strong> tenemos como misión garantizar un excelente servicio en el ámbito 
-            de las ventas económicas en este tipo de industrias al contar con una disponibilidad estable.
-          </p>
-          <p>
-            Con mucho gusto colaboraremos con diversas empresas famosas referentes a estos servicios 
-            para poder así garantizar un crecimiento exponencial mutuo para ambas partes.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Vista previa del catálogo -->
-    <div id="catalogo-preview" class="catalog-section">
-      <div class="section-header">
-        <h2 class="section-title">✨ Nuestros Productos Destacados</h2>
-        <div class="title-underline"></div>
-      </div>
+      </Transition>
       
-      <div class="products-grid">
-        <div class="product-card" v-for="(img, index) in imagenesCatalogo.slice(0, 3)" :key="index">
-          <div class="card-image-container">
-            <div class="discount-badge">20% dto</div>
-            <img :src="img.src" :alt="img.alt" class="product-image" />
-            <div class="image-overlay"></div>
-          </div>
-          
-          <div class="product-info">
-            <h3 class="product-title">{{ img.titulo }}</h3>
-            <p class="product-description">{{ img.descripcion }}</p>
-            
-            <!-- Mostrar precio solo a usuarios autenticados -->
-            <div v-if="isAuthenticated" class="product-actions">
-              <div class="price-display">
-                <span class="price-label">Precio:</span>
-                <span class="price-value">{{ img.precio }}</span>
-              </div>
-              <button class="add-to-cart-btn" @click="addToCart(img)">
-                <span class="cart-icon">🛒</span>
-                <span>Agregar al Carrito</span>
-              </button>
-            </div>
-            
-            <div v-else class="login-prompt">
-              <router-link to="/login" class="login-prompt-btn">
-                <span class="lock-icon">🔒</span>
-                <span>Inicia sesión para ver precios</span>
-              </router-link>
+      <TransitionGroup name="terms-card" tag="div" class="terms-grid">
+        <!-- 1. Aceptación de Términos -->
+        <div class="terms-card" :key="1">
+          <h3 class="terms-subtitle">1. Aceptación de Términos</h3>
+          <div class="terms-text-container">
+            <p class="terms-text">
+              Al acceder o utilizar el sitio web de BRAZZINO'S, usted acepta estar sujeto a estos Términos y Condiciones, así como a nuestra <a href="#politica" class="internal-link">Política de Privacidad</a>. Si no está de acuerdo, por favor no use nuestros servicios.
+            </p>
+            <p class="terms-text important">
+              Estos términos constituyen un contrato legal vinculante entre usted y BRAZZINO'S. Nos reservamos el derecho de modificarlos en cualquier momento, notificando los cambios en el sitio web.
+            </p>
+            <div class="acceptance-badge">
+              <span class="badge-icon">✅</span>
+              <span>Aceptación Contractual</span>
             </div>
           </div>
         </div>
-      </div>
-      
-      <div class="catalog-footer">
-        <router-link to="/catalogo" class="view-catalog-btn">
-          <span class="catalog-icon">📖</span>
-          <span>Ver Catálogo Completo</span>
-        </router-link>
-      </div>
-    </div>
+        
+        <!-- 2. Elegibilidad y Edad -->
+        <div class="terms-card" :key="2">
+          <h3 class="terms-subtitle">2. Elegibilidad y Edad</h3>
+          <div class="terms-text-container">
+            <p class="terms-text">Debe tener al menos 18 años (o la edad legal en su jurisdicción) para usar nuestros servicios y comprar productos alcohólicos.</p>
+            <p class="terms-text highlight">
+              Verificamos la edad durante el registro y compra. Cualquier intento de falsificar la edad resultará en la suspensión permanente de la cuenta.
+            </p>
+            <div class="age-restriction">
+              <span class="restriction-icon">🚫</span>
+              <span><strong>Restricción Legal:</strong> Solo mayores de 18 años</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 3. Cuenta de Usuario -->
+        <div class="terms-card" :key="3">
+          <h3 class="terms-subtitle">3. Cuenta de Usuario</h3>
+          <div class="terms-text-container">
+            <p class="terms-text">Para acceder a funciones completas, debe crear una cuenta proporcionando información precisa y actualizada. Usted es responsable de mantener la confidencialidad de sus credenciales.</p>
+            <div class="account-rules">
+              <div class="rule-item">🔐 Mantenga su contraseña segura</div>
+              <div class="rule-item">📧 Use información verídica</div>
+              <div class="rule-item">🚫 No comparta su cuenta</div>
+              <div class="rule-item">⚠️ Reporte actividad sospechosa</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 4. Pedidos y Pagos -->
+        <div class="terms-card" :key="4">
+          <h3 class="terms-subtitle">4. Pedidos y Pagos</h3>
+          <div class="terms-text-container">
+            <p class="terms-text">Todos los pedidos están sujetos a disponibilidad y aprobación. Los precios mostrados incluyen impuestos aplicables. Aceptamos múltiples métodos de pago seguros.</p>
+            <p class="terms-text">Los pagos son procesados inmediatamente. No se procesan reembolsos excepto en casos de productos defectuosos o errores de envío.</p>
+            <div class="payment-methods">
+              <div class="method-item">💳 Tarjetas de Crédito/Débito</div>
+              <div class="method-item">💰 PayPal</div>
+              <div class="method-item">🏦 Transferencia Bancaria</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 5. Envíos y Entregas -->
+        <div class="terms-card" :key="5">
+          <h3 class="terms-subtitle">5. Envíos y Entregas</h3>
+          <div class="terms-text-container">
+            <p class="terms-text">Los tiempos de entrega varían según la ubicación. Requiere firma del receptor mayor de edad para productos alcohólicos. No entregamos a direcciones sin supervisión adulta.</p>
+            <p class="terms-text important">En caso de ausencia del receptor, el paquete será devuelto y se aplicarán costos adicionales de reenvío.</p>
+            <div class="delivery-badge">
+              <span class="badge-icon">📦</span>
+              <span>Entrega con Verificación de Edad</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 6. Cancelaciones y Reembolsos -->
+        <div class="terms-card" :key="6">
+          <h3 class="terms-subtitle">6. Cancelaciones y Reembolsos</h3>
+          <div class="terms-text-container">
+            <p class="terms-text">Puede cancelar pedidos dentro de 2 horas posteriores a la compra, antes del procesamiento. Después de procesado, no se aceptan cancelaciones.</p>
+            <p class="terms-text">Reembolsos completos solo para productos no entregados o defectuosos. El proceso toma 5-10 días hábiles.</p>
+            <div class="refund-policy">
+              <div class="policy-item success">✅ Productos defectuosos</div>
+              <div class="policy-item success">✅ No entregados</div>
+              <div class="policy-item denied">❌ Cambio de opinión</div>
+              <div class="policy-item denied">❌ Después del envío</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 7. Consumo Responsable -->
+        <div class="terms-card" :key="7">
+          <h3 class="terms-subtitle">7. Consumo Responsable</h3>
+          <div class="terms-text-container">
+            <p class="terms-text highlight">Promovemos el consumo responsable de alcohol. No alentamos el abuso ni la compra para terceros no autorizados.</p>
+            <p class="terms-text">Violaciones a leyes de control de alcohol resultan en suspensión de cuenta y posible reporte a autoridades.</p>
+            <div class="responsibility-warning">
+              <span class="warning-icon">⚠️</span>
+              <span>Consuma con responsabilidad - No abuse del alcohol</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 8. Propiedad Intelectual -->
+        <div class="terms-card" :key="8">
+          <h3 class="terms-subtitle">8. Propiedad Intelectual</h3>
+          <div class="terms-text-container">
+            <p class="terms-text">Todo el contenido del sitio (imágenes, textos, marcas) es propiedad de BRAZZINO'S o sus licenciantes. Prohibida la reproducción sin autorización.</p>
+            <p class="terms-text">Las marcas registradas no pueden usarse sin permiso expreso por escrito.</p>
+            <div class="ip-badge">
+              <span class="badge-icon">©</span>
+              <span>Todos los derechos reservados</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 9. Limitación de Responsabilidad -->
+        <div class="terms-card" :key="9">
+          <h3 class="terms-subtitle">9. Limitación de Responsabilidad</h3>
+          <div class="terms-text-container">
+            <p class="terms-text">BRAZZINO'S no se responsabiliza por daños indirectos, pérdidas de datos o uso indebido de productos. Máxima responsabilidad limitada al valor del pedido.</p>
+            <p class="terms-text important">
+              No garantizamos disponibilidad constante del sitio ni interrupciones técnicas ocasionales.
+            </p>
+          </div>
+        </div>
+        
+        <!-- 10. Contacto y Ley Aplicable -->
+        <div class="terms-card" :key="10">
+          <h3 class="terms-subtitle">10. Contacto y Ley Aplicable</h3>
+          <div class="terms-text-container">
+            <p class="terms-text">Estos términos se rigen por las leyes de Colombia. Cualquier disputa se resolverá en tribunales de Bogotá.</p>
+            <p class="terms-text">Para consultas: <a href="mailto:legal@brazzinos.com" class="contact-link">legal@brazzinos.com</a></p>
+            <p class="terms-date">Última actualización: <span class="date-highlight">17 de octubre de 2025</span></p>
+          </div>
+          <div class="contact-actions">
+            <button class="policy-btn" @click="scrollToPolicy">
+              📜 Ver Política de Privacidad
+            </button>
+          </div>
+        </div>
+      </TransitionGroup>
+    </section>
 
     <!-- Footer -->
     <footer class="footer" id="contactanos">
@@ -265,6 +421,9 @@ let intervalo = null
 const isAuthenticated = ref(true)
 const usernombre = ref('')
 
+// Estado del modal
+const showTerms = ref(false)
+
 // Computed para verificar si es página de auth
 const isAuthPage = computed(() => {
   return route.meta?.hideNavigation || route.name === 'login' || route.name === 'catalogo'
@@ -279,11 +438,11 @@ function anterior() {
   actual.value = (actual.value - 1 + imagenes.length) % imagenes.length
 }
 
-// Función para verificar autenticación - VERSIÓN CORREGIDA
+// Función para verificar autenticación
 function checkAuthStatus() {
   console.log('Verificando estado de autenticación...')
   const token = localStorage.getItem('authToken')
-  const user = localStorage.getItem('usuario') // ✅ Cambiado de 'user' a 'usuario'
+  const user = localStorage.getItem('usuario')
 
   console.log('Token:', token, 'User:', user)
 
@@ -298,17 +457,18 @@ function checkAuthStatus() {
       isAuthenticated.value = false
       usernombre.value = ''
       localStorage.removeItem('authToken')
-      localStorage.removeItem('usuario') // ✅ Cambiado
+      localStorage.removeItem('usuario')
     }
   } else {
     console.log('No hay datos de autenticación válidos')
     isAuthenticated.value = false
     usernombre.value = ''
     localStorage.removeItem('authToken')
-    localStorage.removeItem('usuario') // ✅ Cambiado
+    localStorage.removeItem('usuario')
   }
   console.log('Estado final - isAuthenticated:', isAuthenticated.value, 'usernombre:', usernombre.value)
 }
+
 // Función de logout
 function logout() {
   localStorage.removeItem('authToken')
@@ -323,10 +483,52 @@ function addToCart(producto) {
   alert(`${producto.titulo} agregado al carrito!`)
 }
 
+// Función para scroll a la Política de Privacidad
+const scrollToPolicy = () => {
+  document.getElementById('politica')?.scrollIntoView({
+    behavior: 'smooth', block: 'start'
+  })
+}
+
+// New toggle function for terms
+function toggleTerms() {
+  showTerms.value = !showTerms.value
+}
+
+// Función para observar las tarjetas de términos
+let observer = null
+function setupTermsObserver() {
+  if (typeof IntersectionObserver !== 'undefined') {
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    }
+    observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate')
+        }
+      })
+    }, observerOptions)
+    const termsCards = document.querySelectorAll('.terms-card')
+    termsCards.forEach(card => observer.observe(card))
+  }
+}
+
 // Watchers y lifecycle
 watch(() => route.path, () => {
   checkAuthStatus()
 }, { immediate: true })
+
+watch(showTerms, (newValue) => {
+  if (newValue) {
+    // Espera un pequeño delay para que el DOM se actualice y luego configura el observer
+    setTimeout(setupTermsObserver, 100)
+  } else if (observer) {
+    observer.disconnect()
+    observer = null
+  }
+})
 
 onMounted(() => {
   checkAuthStatus()
@@ -340,6 +542,9 @@ onUnmounted(() => {
   if (intervalo) {
     clearInterval(intervalo)
   }
+  if (observer) {
+    observer.disconnect()
+  }
 })
 
 watch(isAuthPage, (newValue) => {
@@ -351,7 +556,6 @@ watch(isAuthPage, (newValue) => {
   }
 })
 </script>
-
 <style scoped>
 /* Layout de autenticación */
 .auth-layout {
@@ -371,6 +575,12 @@ watch(isAuthPage, (newValue) => {
   position: relative;
   overflow-x: hidden;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Main content wrapper */
+.main-content {
+  position: relative;
+  z-index: 10;
 }
 
 .background-overlay {
@@ -456,6 +666,7 @@ watch(isAuthPage, (newValue) => {
 .nav-icon {
   font-size: 1.1rem;
   filter: drop-shadow(0 0 5px currentColor);
+  cursor: pointer;
 }
 
 /* Usuario autenticado */
@@ -507,7 +718,7 @@ watch(isAuthPage, (newValue) => {
   font-size: 1rem;
 }
 
-/* Botón de login - Ahora con el mismo estilo que los nav-link */
+/* Botón de login */
 .login-link {
   color: rgba(255, 255, 255, 0.9) !important;
   text-decoration: none;
@@ -1065,6 +1276,374 @@ watch(isAuthPage, (newValue) => {
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
 }
 
+/* Estilos para Términos y Condiciones */
+.terms-section {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  z-index: 1000;
+  background: rgba(15, 15, 15, 0.95);
+  border-radius: 20px;
+  padding: 2rem;
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  backdrop-filter: blur(25px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* Overlay to dim background when terms are shown */
+.main-layout {
+  position: relative;
+}
+.main-layout::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 999;
+  display: v-bind(showTerms ? 'block' : 'none');
+}
+
+.terms-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, #FFD700, #FF4500, #8B4513, #FFD700);
+  background-size: 400% 400%;
+  animation: terms-glow 4s ease-in-out infinite;
+}
+
+@keyframes terms-glow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 400% 50%; }
+}
+
+.terms-grid {
+  display: grid;
+  gap: 2rem;
+}
+
+.terms-card {
+  background: rgba(20, 20, 20, 0.9);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 15px;
+  padding: 2rem;
+  transition: all 0.4s ease;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transform: translateY(50px) rotateX(-10deg);
+}
+
+.terms-card.animate {
+  opacity: 1;
+  transform: translateY(0) rotateX(0);
+}
+
+.terms-card:hover {
+  border-color: rgba(255, 215, 0, 0.5);
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.7);
+}
+
+.terms-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 215, 0, 0.2),
+    transparent
+  );
+  transition: 0.5s;
+}
+
+.terms-card:hover::before {
+  left: 100%;
+}
+
+.terms-subtitle {
+  color: #FFD700;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.terms-text-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.terms-text {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.terms-text.important {
+  background: rgba(255, 215, 0, 0.1);
+  padding: 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.terms-text.highlight {
+  background: rgba(139, 69, 19, 0.2);
+  padding: 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  position: relative;
+  animation: highlight-shine 3s ease-in-out infinite;
+}
+
+@keyframes highlight-shine {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.6); }
+}
+
+.internal-link {
+  color: #FFD700;
+  text-decoration: none;
+  font-weight: 600;
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.internal-link:hover {
+  color: #FF4500;
+}
+
+.internal-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #FF4500;
+  transition: width 0.3s ease;
+}
+
+.internal-link:hover::after {
+  width: 100%;
+}
+
+.acceptance-badge,
+.delivery-badge,
+.ip-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #28a745, #218838);
+  padding: 0.8rem 1.2rem;
+  border-radius: 25px;
+  color: white;
+  font-weight: 600;
+  width: fit-content;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  animation: slide-up-special 0.5s ease-out forwards;
+}
+
+.age-restriction {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  padding: 0.8rem 1.2rem;
+  border-radius: 25px;
+  color: white;
+  font-weight: 600;
+  width: fit-content;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  animation: restriction-shake 0.5s ease-in-out;
+}
+
+@keyframes restriction-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+}
+
+.responsibility-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #FF4500, #e53e3e);
+  padding: 0.8rem 1.2rem;
+  border-radius: 25px;
+  color: white;
+  font-weight: 600;
+  width: fit-content;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  animation: warning-pulse 2s ease-in-out infinite;
+}
+
+@keyframes warning-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.badge-icon,
+.restriction-icon,
+.warning-icon {
+  font-size: 1.2rem;
+}
+
+@keyframes slide-up-special {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.account-rules,
+.payment-methods,
+.refund-policy {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1rem;
+  animation: slide-up-special 0.5s ease-out forwards;
+}
+
+.rule-item,
+.method-item,
+.policy-item {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.8rem 1.2rem;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.rule-item:hover,
+.method-item:hover,
+.policy-item:hover {
+  transform: translateX(5px);
+  background: rgba(255, 215, 0, 0.1);
+  border-color: rgba(255, 215, 0, 0.4);
+}
+
+.policy-item.success {
+  border-color: #28a745;
+  background: rgba(40, 167, 69, 0.1);
+}
+
+.policy-item.denied {
+  border-color: #dc3545;
+  background: rgba(220, 53, 69, 0.1);
+}
+
+.contact-link {
+  color: #FFD700;
+  text-decoration: none;
+  font-weight: 600;
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.contact-link:hover {
+  color: #FF4500;
+}
+
+.contact-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #FF4500;
+  transition: width 0.3s ease;
+}
+
+.contact-link:hover::after {
+  width: 100%;
+}
+
+.terms-date {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
+.date-highlight {
+  color: #FFD700;
+  font-weight: 600;
+  background: rgba(255, 215, 0, 0.1);
+  padding: 0.2rem 0.5rem;
+  border-radius: 5px;
+}
+
+.contact-actions {
+  margin-top: 1.5rem;
+}
+
+.policy-btn {
+  background: linear-gradient(135deg, #FFD700, #FF4500);
+  color: #000000;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+  animation: btn-glow 2s ease-in-out infinite;
+}
+
+.policy-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 215, 0, 0.5);
+  background: linear-gradient(135deg, #FF4500, #8B4513);
+}
+
+@keyframes btn-glow {
+  0%, 100% { box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3); }
+  50% { box-shadow: 0 8px 25px rgba(255, 215, 0, 0.6); }
+}
+
+/* Animaciones de transición */
+.terms-header-enter-active {
+  transition: all 0.8s ease-out;
+}
+
+.terms-header-enter-from {
+  opacity: 0;
+  transform: translateY(-50px);
+}
+
+.terms-card-enter-active {
+  transition: all 0.6s ease-out;
+}
+
+.terms-card-enter-from {
+  opacity: 0;
+  transform: translateY(50px) rotateX(-10deg);
+}
+
+.terms-card-move {
+  transition: all 0.6s ease-out;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
   .navbar-content {
@@ -1235,5 +1814,88 @@ watch(isAuthPage, (newValue) => {
   .contact-item {
     padding: 1.5rem;
   }
+}
+
+@media (max-width: 768px) {
+  .terms-section {
+    padding: 3rem 1rem;
+  }
+
+  .terms-card {
+    padding: 1.5rem;
+  }
+
+  .terms-subtitle {
+    font-size: 1.3rem;
+  }
+
+  .terms-text {
+    font-size: 0.9rem;
+  }
+
+  .policy-btn {
+    padding: 0.8rem 1.5rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .terms-section {
+    padding: 2rem 0.5rem;
+    margin: 0 0.5rem 2rem;
+  }
+
+  .terms-card {
+    padding: 1rem;
+  }
+
+  .terms-subtitle {
+    font-size: 1.1rem;
+  }
+
+  .terms-text {
+    font-size: 0.85rem;
+  }
+
+  .policy-btn {
+    padding: 0.7rem 1.2rem;
+    font-size: 0.85rem;
+  }
+
+  .acceptance-badge,
+  .delivery-badge,
+  .ip-badge,
+  .age-restriction,
+  .responsibility-warning {
+    padding: 0.6rem 1rem;
+    font-size: 0.8rem;
+  }
+
+  .rule-item,
+  .method-item,
+  .policy-item {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* Botón X para cerrar el modal */
+.close-modal-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  border: none;
+  color: #FFD700;
+  font-size: 2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1001;
+}
+
+.close-modal-btn:hover {
+  color: #FF4500;
+  transform: scale(1.2);
 }
 </style>

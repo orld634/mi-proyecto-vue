@@ -6,7 +6,7 @@
     <!-- Navbar -->
     <nav class="navbar">
       <div class="navbar-content">
-        <router-link to="/" class="brand-title">BRAZZINO'S</router-link>
+        <router-link to="/" class="brand-title">Brindis Express</router-link>
         <div class="nav-section">
           <div class="nav-links">
             <router-link to="/" class="nav-link">
@@ -73,11 +73,11 @@
         <div class="filter-buttons">
           <button 
             v-for="category in categories" 
-            :key="category"
-            @click="selectedCategory = category"
-            :class="['filter-btn', { active: selectedCategory === category }]"
+            :key="category.id"
+            @click="selectedCategory = category.id"
+            :class="['filter-btn', { active: selectedCategory === category.id }]"
           >
-            {{ category }}
+            {{ category.name }}
           </button>
         </div>
         
@@ -202,10 +202,60 @@
           <div class="cart-total">
             Total: {{ calculateTotal() }}
           </div>
-          <button class="checkout-btn">Proceder al Pago</button>
+         <button @click="openPaymentOptions" class="checkout-btn">Proceder al Pago</button>
         </div>
       </div>
     </div>
+
+   <!-- Modal de Opciones de Pago -->
+<div v-if="showPaymentModal" class="payment-modal-overlay" @click="closePaymentModal">
+  <div class="payment-modal" @click.stop>
+    <div class="payment-header">
+      <h3>Opciones de Pago</h3>
+      <button @click="closePaymentModal" class="close-btn">×</button>
+    </div>
+    <div class="payment-content">
+      <p>Selecciona tu método de pago:</p>
+      <div class="payment-options">
+        <button class="payment-option" @click="selectPaymentMethod('tarjeta')">
+          <span>💳</span> Tarjeta de Crédito/Débito
+        </button>
+        <button class="payment-option" @click="selectPaymentMethod('transferencia')">
+          <span>🏦</span> Transferencia Bancaria
+        </button>
+        <button class="payment-option" @click="selectPaymentMethod('efectivo')">
+          <span>💵</span> Efectivo (Contraentrega)
+        </button>
+      </div>
+      <div class="payment-form" v-if="selectedPaymentMethod === 'tarjeta'">
+        <h4>Ingresa los datos de tu tarjeta</h4>
+        <form @submit.prevent="processPayment">
+          <input type="text" placeholder="Número de tarjeta" class="payment-input" required>
+          <input type="text" placeholder="Nombre del titular" class="payment-input" required>
+          <div class="expiry-cvv">
+            <input type="text" placeholder="MM/AA" class="payment-input" required>
+            <input type="text" placeholder="CVV" class="payment-input" required>
+          </div>
+          <button type="submit" class="confirm-payment-btn">Confirmar Pago</button>
+        </form>
+      </div>
+      <div class="payment-instructions" v-if="selectedPaymentMethod === 'transferencia'">
+        <h4>Instrucciones para Transferencia Bancaria</h4>
+        <p>Realiza tu pago a la siguiente cuenta:</p>
+        <p><strong>Banco:</strong> Banco XYZ</p>
+        <p><strong>Número de Cuenta:</strong> 123456789</p>
+        <p><strong>Titular:</strong> Brindis Express S.A.</p>
+        <p><strong>Monto:</strong> {{ calculateTotal() }}</p>
+        <button @click="confirmTransferPayment" class="confirm-payment-btn">Confirmar Transferencia</button>
+      </div>
+      <div class="payment-confirmation" v-if="selectedPaymentMethod === 'efectivo'">
+        <h4>Pago en Efectivo</h4>
+        <p>Tu pedido será procesado y podrás pagar en efectivo al recibirlo.</p>
+        <button @click="confirmCashPayment" class="confirm-payment-btn">Confirmar Pedido</button>
+      </div>
+    </div>
+  </div>
+</div>
 
     <!-- Grid de productos -->
     <div class="products-section" ref="productsSection">
@@ -359,11 +409,16 @@
                 <span class="lock-icon">🔒</span>
                 Inicia sesión para comprar
               </router-link>
+              
             </div>
           </div>
         </div>
       </div>
     </div>
+   
+
+
+    
 
     <!-- Footer -->
     <footer class="footer" id="contactanos">
@@ -402,435 +457,537 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+<script setup >
+import axios from 'axios';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useStore } from '@/stores';
 
-const route = useRoute()
-const router = useRouter()
+const route = useRoute();
+const router = useRouter();
+const store = useStore();
 
-// Referencias a elementos del DOM
-const filtersSection = ref(null)
-const productsSection = ref(null)
+// ==== Estado general ====
+const isAuthenticated = ref(false);
+const userName = ref('');
+const cart = ref([]);
+const showCartModal = ref(false);
+const selectedProduct = ref(null);
+const showScrollToTop = ref(false);
+const showPaymentModal = ref(false);
+const selectedPaymentMethod = ref('');
 
-// Estado de autenticación
-const isAuthenticated = ref(false)
-const userName = ref('')
+// ==== Filtros y paginación ====
+const searchQuery = ref('');
+const selectedCategory = ref('Todos');
+const sortBy = ref('name');
+const currentPage = ref(1);
+const itemsPerPage = ref(9);
 
-// Estado del carrito
-const cart = ref([])
-const showCartModal = ref(false)
+// ==== Referencias DOM ====
+const filtersSection = ref(null);
+const productsSection = ref(null);
 
-// Estado de filtros y búsqueda
-const searchQuery = ref('')
-const selectedCategory = ref('Todos')
-const sortBy = ref('name')
+// ==================== ESTRUCTURA: CATEGORÍAS CON PRODUCTOS ====================
+const categoriesWithProducts = computed(() => {
+  const cats = store.categories || [];
+  
+  return cats.map(category => {
+    const categoryProducts = (store.products || []).filter(prod => 
+      Number(prod.id_categoria) === Number(category.id)
+    );
 
-// Estado de paginación
-const currentPage = ref(1)
-const itemsPerPage = ref(9)
-const showScrollToTop = ref(false)
+    return {
+      id: category.id,
+      nombre: category.nombre,
+      descripcion: category.descripcion,
+      productos: categoryProducts.map(product => {
+        const precio = Number(product.precio_venta || 0);
+        return {
+          id: product.id,
+          src: product.imagen_url || 'https://via.placeholder.com/300',
+          alt: product.nombre,
+          titulo: product.nombre,
+          descripcion: product.descripcion || 'Producto de alta calidad',
+          descripcionLarga: product.descripcion || 'Sin descripción detallada',
+          precio: `$${precio.toLocaleString('es-CO')}`,
+          precioOriginal: null,
+          descuento: null,
+          rating: 4.8,
+          reviews: Math.floor(Math.random() * 200) + 50,
+          categoria: category.nombre,
+          categoryId: Number(product.id_categoria),
+          stock: product.stock_actual
+        };
+      })
+    };
+  });
+});
 
-// Estado del modal de producto
-const selectedProduct = ref(null)
+// ==================== PRODUCTOS BIEN MAPEADOS ====================
+const products = computed(() => {
+  const prods = store.products || [];
+  
+  return prods.map(product => {
+    const categoriaObj = store.categories.find(cat => 
+      Number(cat.id_categoria || cat.id) === Number(product.id_categoria)
+    );
 
-// Categorías disponibles
-const categories = ['Todos', 'Vodka', 'Whisky', 'Champagne', 'Rum', 'Gin', 'Tequila']
+    const nombreCategoria = categoriaObj 
+      ? (categoriaObj.nombre || categoriaObj.name || 'Sin categoría')
+      : 'Sin categoría';
 
-// Catálogo completo de productos (mismo que el original)
-const productos = [
-  {
-    src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS4sJIOk7YAVvCtg_lR47hL-AWJWmxCeIXreQ&s",
-    alt: "Vodka Premium",
-    titulo: "Vodka Premium Absolut",
-    categoria: "Vodka",
-    descripcion: "Tiene un sabor neutro y suave, aunque algunas variedades pueden tener un sabor ligeramente dulce o herbal.",
-    descripcionLarga: "Vodka premium destilado cinco veces con agua pura de Suecia. Su sabor excepcional y suavidad incomparable lo convierte en la elección perfecta para los conocedores más exigentes.",
-    precio: "$85,000",
-    precioOriginal: "$100,000",
-    descuento: 15,
-    rating: 4.5,
-    reviews: 127
-  },
-  {
-    src: "https://muttsmousers.ca/media/catalog/product/cache/6ab565c3c7e8d6f3f386bd0dc87c9acc/d/o/dog_perignon_gift_set2_grande2.jpg",
-    alt: "Dom Pérignon",
-    titulo: "Dom Pérignon Vintage",
-    categoria: "Champagne",
-    descripcion: "Se produce a partir de una selección de las mejores uvas de la región de Champagne, Francia.",
-    descripcionLarga: "El champagne más prestigioso del mundo. Dom Pérignon Vintage es elaborado únicamente en años excepcionales con las mejores uvas Chardonnay y Pinot Noir de la región de Champagne.",
-    precio: "$450,000",
-    rating: 5,
-    reviews: 89
-  },
-  {
-    src: "https://static.wixstatic.com/media/477dc5_b15de143c3884b26843471907ffe9fc8~mv2.png/v1/fill/w_560,h_560,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/477dc5_b15de143c3884b26843471907ffe9fc8~mv2.png",
-    alt: "Buchanan's 12",
-    titulo: "Buchanan's 12 Años",
-    categoria: "Whisky",
-    descripcion: "Whisky escocés de mezcla premium envejecido durante 12 años.",
-    descripcionLarga: "Un whisky escocés de mezcla excepcional, elaborado con whiskies cuidadosamente seleccionados y envejecidos durante un mínimo de 12 años. Notas de miel, vainilla y frutas secas.",
-    precio: "$120,000",
-    precioOriginal: "$140,000",
-    descuento: 14,
-    rating: 4.3,
-    reviews: 203
-  },
-  {
-    src: "https://lacaretalicores.com/cdn/shop/files/WhatsAppImage2024-05-21at4.36.34PM.jpg?v=1716330847",
-    alt: "Buchanan's 18",
-    titulo: "Buchanan's 18 Años",
-    categoria: "Whisky",
-    descripcion: "Whisky escocés premium con 18 años de envejecimiento.",
-    descripcionLarga: "La expresión más refinada de Buchanan's. Envejecido durante 18 años, ofrece una complejidad excepcional con notas de chocolate, especias y roble tostado.",
-    precio: "$180,000",
-    rating: 4.7,
-    reviews: 156
-  },
-  {
-    src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrGHqUOp7T6RnH0kh9r7_8yXFhVp6YQX9oJw&s",
-    alt: "Ron Zacapa",
-    titulo: "Ron Zacapa Centenario 23",
-    categoria: "Rum",
-    descripcion: "Ron guatemalteco premium envejecido 23 años en las montañas.",
-    descripcionLarga: "Un ron excepcional de Guatemala, envejecido a 2300 metros sobre el nivel del mar. Su sistema solera le otorga una complejidad única con notas de caramelo, chocolate y especias.",
-    precio: "$220,000",
-    precioOriginal: "$250,000",
-    descuento: 12,
-    rating: 4.8,
-    reviews: 98
-  },
-  {
-    src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxvEHKuHJBHDKzU9XzwQ8wHLN8m7_zFj8Qhw&s",
-    alt: "Hendrick's Gin",
-    titulo: "Hendrick's Gin",
-    categoria: "Gin",
-    descripcion: "Gin premium escocés con pepino y pétalos de rosa.",
-    descripcionLarga: "Un gin extraordinario destilado con una infusión única de pepino y pétalos de rosa. Su sabor distintivo y refrescante lo convierte en la elección perfecta para cócteles sofisticados.",
-    precio: "$95,000",
-    rating: 4.4,
-    reviews: 167
-  },
-  {
-    src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR5mzBx4nNHp8vO6L2qP3cWgK9xY5tQ7nX2Zw&s",
-    alt: "Tequila Don Julio",
-    titulo: "Don Julio 1942",
-    categoria: "Tequila",
-    descripcion: "Tequila añejo premium mexicano de agave 100% azul.",
-    descripcionLarga: "Un tequila añejo excepcional, elaborado con agave azul 100% y añejado en barricas de roble. Su sabor suave y complejo celebra la tradición tequilera mexicana.",
-    precio: "$320,000",
-    precioOriginal: "$380,000",
-    descuento: 16,
-    rating: 4.9,
-    reviews: 134
-  },
-  {
-    src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRnB7x4QvN3wGzLmD8kE5fH2tO9pK6rJ8xYvw&s",
-    alt: "Grey Goose",
-    titulo: "Grey Goose Vodka",
-    categoria: "Vodka",
-    descripcion: "Vodka francés premium destilado en Cognac.",
-    descripcionLarga: "Vodka super premium francés destilado en la región de Cognac con trigo suave francés. Su pureza excepcional y suavidad refinada definen el estándar del vodka de lujo.",
-    precio: "$110,000",
-    rating: 4.6,
-    reviews: 198
-  },
-  {
-    src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS8vLKmH6wN4pQ2xD9rE7fG3tY5nK8sJ6xZtw&s",
-    alt: "Macallan 18",
-    titulo: "The Macallan 18 Años",
-    categoria: "Whisky",
-    descripcion: "Single malt escocés envejecido en barricas de jerez.",
-    descripcionLarga: "Un single malt escocés excepcional, madurado exclusivamente en barricas de roble sazonadas con jerez durante 18 años. Rica complejidad con notas de frutas secas, especias y chocolate.",
-    precio: "$680,000",
-    rating: 4.9,
-    reviews: 76
-  }
-]
+    const precio = Number(product.precio_venta || product.price || 0);
 
-// Computed properties
+    return {
+      id: product.id_producto || product.id,
+      src: product.imagen_url || product.image || 'https://via.placeholder.com/300',
+      alt: product.nombre || product.name,
+      titulo: product.nombre || product.name,
+      descripcion: product.descripcion || 'Bebida premium de alta calidad',
+      descripcionLarga: product.descripcion_larga || product.descripcion || 'Sin descripción detallada',
+      precio: `$${precio.toLocaleString('es-CO')}`,
+      precioOriginal: null,
+      descuento: null,
+      rating: 4.8,
+      reviews: Math.floor(Math.random() * 200) + 50,
+      categoria: nombreCategoria,
+      categoryId: Number(product.id_categoria),
+      stock: product.stock_actual
+    };
+  });
+});
+
+// ==================== CATEGORÍAS CORRECTAS ====================
+const categories = computed(() => {
+  const cats = store.categories || [];
+  return [
+    { id: 'Todos', name: 'Todos los productos' },
+    ...cats.map(cat => ({
+      id: Number(cat.id_categoria || cat.id),
+      name: cat.nombre || cat.name || 'Sin nombre'
+    }))
+  ];
+});
+
+// ==================== FILTRADO CORRECTO ====================
 const filteredProducts = computed(() => {
-  let filtered = productos
+  let filtered = products.value;
 
-  // Filtrar por categoría
   if (selectedCategory.value !== 'Todos') {
-    filtered = filtered.filter(product => product.categoria === selectedCategory.value)
+    filtered = filtered.filter(product => 
+      product.categoryId === Number(selectedCategory.value)
+    );
   }
 
-  // Filtrar por búsqueda
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(product => 
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase();
+    filtered = filtered.filter(product =>
       product.titulo.toLowerCase().includes(query) ||
       product.descripcion.toLowerCase().includes(query) ||
       product.categoria.toLowerCase().includes(query)
-    )
+    );
   }
 
-  // Ordenar
   if (sortBy.value === 'name') {
-    filtered.sort((a, b) => a.titulo.localeCompare(b.titulo))
+    filtered.sort((a, b) => a.titulo.localeCompare(b.titulo));
   } else if (sortBy.value === 'price') {
     filtered.sort((a, b) => {
-      const priceA = parseInt(a.precio.replace(/[^\d]/g, ''))
-      const priceB = parseInt(b.precio.replace(/[^\d]/g, ''))
-      return priceA - priceB
-    })
+      const priceA = parseInt(a.precio.replace(/[^\d]/g, ''));
+      const priceB = parseInt(b.precio.replace(/[^\d]/g, ''));
+      return priceA - priceB;
+    });
   } else if (sortBy.value === 'category') {
-    filtered.sort((a, b) => a.categoria.localeCompare(b.categoria))
+    filtered.sort((a, b) => a.categoria.localeCompare(b.categoria));
   }
 
-  return filtered
-})
+  return filtered;
+});
 
-const totalPages = computed(() => {
-  return Math.ceil(filteredProducts.value.length / itemsPerPage.value)
-})
-
-const startIndex = computed(() => {
-  return (currentPage.value - 1) * itemsPerPage.value
-})
-
-const paginatedProducts = computed(() => {
-  const start = startIndex.value
-  const end = start + itemsPerPage.value
-  return filteredProducts.value.slice(start, end)
-})
+// ==================== PAGINACIÓN ====================
+const totalPages = computed(() => Math.ceil(filteredProducts.value.length / itemsPerPage.value));
+const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value);
+const paginatedProducts = computed(() => 
+  filteredProducts.value.slice(startIndex.value, startIndex.value + itemsPerPage.value)
+);
 
 const visiblePages = computed(() => {
-  const total = totalPages.value
-  const current = currentPage.value
-  const visible = []
-  
-  if (total <= 7) {
-    for (let i = 1; i <= total; i++) {
-      visible.push(i)
+  const total = totalPages.value;
+  const current = currentPage.value;
+  const delta = 2;
+  const range = [];
+  const rangeWithDots = [];
+
+  for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
+    range.push(i);
+  }
+
+  if (current - delta > 2) range.unshift('...');
+  if (current + delta < total - 1) range.push('...', total);
+
+  rangeWithDots.push(1);
+  rangeWithDots.push(...range);
+  if (total > 1) rangeWithDots.push(total);
+
+  return total <= 1 ? [1] : rangeWithDots;
+});
+
+// ==================== FUNCIONES AUXILIARES ====================
+function checkAuthStatus() {
+  const token = localStorage.getItem('authToken');
+  const user = localStorage.getItem('usuario');
+
+  if (token && user && user !== "undefined") {
+    try {
+      const userData = JSON.parse(user);
+      isAuthenticated.value = true;
+      userName.value = userData.nombre || userData.email || 'Usuario';
+    } catch (e) {
+      logout();
     }
   } else {
-    if (current <= 4) {
-      for (let i = 1; i <= 5; i++) {
-        visible.push(i)
-      }
-      if (total > 5) visible.push('...', total)
-    } else if (current >= total - 3) {
-      visible.push(1)
-      if (total > 6) visible.push('...')
-      for (let i = total - 4; i <= total; i++) {
-        visible.push(i)
-      }
-    } else {
-      visible.push(1, '...')
-      for (let i = current - 1; i <= current + 1; i++) {
-        visible.push(i)
-      }
-      visible.push('...', total)
-    }
-  }
-  
-  return visible
-})
-
-// Funciones principales
-function checkAuthStatus() {
-  if (typeof localStorage !== 'undefined') {
-    const token = localStorage.getItem('authToken')
-    const user = localStorage.getItem('user')
-    
-    if (token && user) {
-      isAuthenticated.value = true
-      const userData = JSON.parse(user)
-      userName.value = userData.name || userData.email || 'Usuario'
-    } else {
-      isAuthenticated.value = true
-      userName.value = ''
-    }
+    isAuthenticated.value = false;
+    userName.value = '';
   }
 }
 
 function logout() {
-  if (typeof localStorage !== 'undefined') {
-    localStorage.removeItem('authToken')
-    localStorage.removeItem('user')
-  }
-  isAuthenticated.value = false
-  userName.value = ''
-  cart.value = []
-  router.push('/login')
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('usuario');
+  isAuthenticated.value = false;
+  userName.value = '';
+  cart.value = [];
+  router.push('/');
 }
 
-function addToCart(product) {
-  cart.value.push(product)
-  showNotification(`${product.titulo} agregado al carrito!`)
-}
+ async function obtenerIdCarritoActivo() {
+  if (!isAuthenticated.value) return null;
 
-function showNotification(message) {
-  const notification = document.createElement('div')
-  notification.textContent = message
-  notification.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: linear-gradient(135deg, #FFD700, #FF4500);
-    color: #000;
-    padding: 1rem 1.5rem;
-    border-radius: 10px;
-    font-weight: bold;
-    z-index: 10000;
-    animation: slideIn 0.3s ease;
-  `
-  document.body.appendChild(notification)
-  setTimeout(() => {
-    if (document.body.contains(notification)) {
-      document.body.removeChild(notification)
+  const token = localStorage.getItem('authToken');
+  const usuarioStr = localStorage.getItem('usuario');
+  if (!token || !usuarioStr) return null;
+
+  try {
+    const usuario = JSON.parse(usuarioStr);
+    
+    // Verifica qué campo tiene tu objeto usuario
+    const userId = usuario.id_usuario || usuario.id || usuario.user_id;
+    
+    console.log('🔍 Buscando carrito activo para usuario:', userId);
+    
+    const { data } = await axios.get(
+      `${import.meta.env.VITE_API_URL}/carrito-compra/activo/usuario/${userId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+
+    console.log('✅ Carrito encontrado:', data);
+    return data?.id_carrito_compra || data?.id || null;
+    
+  } catch (error) {
+    // Si es 404, es normal (no existe carrito activo)
+    if (error.response?.status === 404) {
+      console.log('ℹ️ No hay carrito activo, se creará uno nuevo');
+      return null;
     }
-  }, 3000)
+    
+    console.error('❌ Error obteniendo carrito activo:', error.response?.data || error);
+    return null;
+  }
 }
 
-function removeFromCart(index) {
-  cart.value.splice(index, 1)
+async function addToCart(product) {
+  // 1. Carrito flotante local
+  const existente = cart.value.find(p => p.id === product.id);
+  let cantidadFinal = 1;
+
+  if (existente) {
+    existente.cantidad += 1;
+    cantidadFinal = existente.cantidad;
+  } else {
+    cart.value.push({ ...product, cantidad: 1 });
+  }
+
+  showCartModal.value = true;
+
+  // Si no está logueado → solo local
+  if (!isAuthenticated.value) {
+    alert(`¡${product.titulo} agregado al carrito!`);
+    return;
+  }
+
+  // 2. Obtener o crear carrito
+  let idCarritoCompra = await obtenerIdCarritoActivo();
+
+  if (!idCarritoCompra) {
+    try {
+      const token = localStorage.getItem('authToken');
+      const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+      
+      // Obtener el ID del usuario (verifica qué campo usa tu backend)
+      const userId = usuario.id_usuario || usuario.id || usuario.user_id;
+
+      console.log('🛒 Creando nuevo carrito para usuario:', userId);
+
+      // ✅ CORRECCIÓN: Usar camelCase como espera el DTO
+      const respuesta = await axios.post(
+        `${import.meta.env.VITE_API_URL}/carrito-compra`,
+        {
+          idUsuario: userId,      // ✅ camelCase (antes era id_usuario)
+          estado: 'activo',       // ✅ correcto
+          subtotal: 0             // ✅ correcto
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      idCarritoCompra = respuesta.data.id_carrito_compra || respuesta.data.id;
+      console.log('✅ Carrito creado con ID:', idCarritoCompra);
+      
+    } catch (error) {
+      console.error('❌ Error creando carrito padre:', error.response?.data || error.message);
+      alert('Error al iniciar el carrito. Por favor, intenta nuevamente.');
+      
+      // Revertir cambio local
+      if (existente) {
+        existente.cantidad -= 1;
+        if (existente.cantidad === 0) {
+          cart.value = cart.value.filter(p => p.id !== product.id);
+        }
+      } else {
+        cart.value = cart.value.filter(p => p.id !== product.id);
+      }
+      return;
+    }
+  }
+
+  // 3. Agregar el producto al detalle del carrito
+  // 3. Agregar el producto al detalle del carrito
+  try {
+    const token = localStorage.getItem('authToken');
+    
+    const payload = {
+      idCarritoCompra: idCarritoCompra,
+      idProducto: product.id,
+      cantidad: cantidadFinal,
+      precioUnitario: parseInt(product.precio.replace(/[^\d]/g, ''), 10)
+    };
+
+    console.log('📦 Agregando producto al carrito:', payload);
+
+    // ✅ CAMBIO: Guardar la respuesta en una variable
+    const respuesta = await axios.post(
+      `${import.meta.env.VITE_API_URL}/detalle-carrito`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    // ✅ NUEVO: Guardar el ID del detalle para poder eliminarlo después
+    if (existente) {
+      existente.detalleId = respuesta.data.id_detalle_carrito || respuesta.data.id;
+    } else {
+      const itemEnCarrito = cart.value.find(p => p.id === product.id);
+      if (itemEnCarrito) {
+        itemEnCarrito.detalleId = respuesta.data.id_detalle_carrito || respuesta.data.id;
+      }
+    }
+
+    console.log('✅ Producto agregado exitosamente');
+    alert(`¡${product.titulo} agregado al carrito!`);
+    
+  } catch (error) {
+    console.error('❌ Error agregando al detalle:', error.response?.data || error.message);
+    alert('Error al guardar el producto en el carrito.');
+
+    // Revertir el cambio local
+    if (existente) {
+      existente.cantidad -= 1;
+      if (existente.cantidad === 0) {
+        cart.value = cart.value.filter(p => p.id !== product.id);
+      }
+    } else {
+      cart.value = cart.value.filter(p => p.id !== product.id);
+    }
+  }
+// ==================== CARGAR CARRITO DESDE EL BACKEND ====================
+// ==================== CARGAR CARRITO DESDE EL BACKEND ====================
+async function cargarCarritoDesdeBackend() {
+  if (!isAuthenticated.value) return;
+
+  try {
+    const token = localStorage.getItem('authToken');
+    const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+    const userId = usuario.id_usuario || usuario.id || usuario.user_id;
+
+    console.log('🔄 Cargando carrito desde el backend...');
+
+    // 1. Obtener el carrito activo
+    const idCarritoCompra = await obtenerIdCarritoActivo();
+    
+    if (!idCarritoCompra) {
+      console.log('ℹ️ No hay carrito activo');
+      cart.value = [];
+      return;
+    }
+
+    // 2. Obtener los detalles del carrito
+    const { data } = await axios.get(
+      `${import.meta.env.VITE_API_URL}/detalle-carrito/carrito/${idCarritoCompra}`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+
+    console.log('📦 Detalles del carrito obtenidos:', data);
+
+    // 3. Mapear los productos al formato del carrito local
+    cart.value = data.map((detalle) => {
+      const producto = detalle.producto || {}; // El backend debería incluir la relación
+      
+      return {
+        id: producto.id_producto || detalle.idProducto,
+        detalleId: detalle.id_detalle_carrito || detalle.id, // Guardar para poder eliminar después
+        titulo: producto.nombre || 'Producto',
+        src: producto.imagen_url || 'https://via.placeholder.com/300',
+        precio: `$${Number(detalle.precioUnitario || producto.precio_venta || 0).toLocaleString('es-CO')}`,
+        cantidad: detalle.cantidad || 1,
+        stock: producto.stock_actual || 0
+      };
+    });
+
+    console.log('✅ Carrito cargado:', cart.value);
+
+  } catch (error) {
+    console.error('❌ Error cargando carrito:', error.response?.data || error);
+    cart.value = [];
+  }
 }
 
-function toggleCartModal() {
-  showCartModal.value = !showCartModal.value
-}
 
-function closeCartModal() {
-  showCartModal.value = false
-}
+async function removeFromCart(productId) {  // ✅ Agregado parámetro faltante
+  const item = cart.value.find(p => p.id === productId);
+  if (!item) return;
 
-function showProductDetail(product) {
-  selectedProduct.value = product
-}
+  const detalleId = item.detalleId;
 
-function closeProductDetail() {
-  selectedProduct.value = null
+  // Eliminar del array local
+  cart.value = cart.value.filter(p => p.id !== productId);
+
+  if (!isAuthenticated.value || !detalleId) return;
+
+  try {
+    const token = localStorage.getItem('authToken');
+    await axios.delete(
+      `${import.meta.env.VITE_API_URL}/detalle-carrito/${detalleId}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    console.log('✅ Producto eliminado del backend');
+  } catch (error) {
+    console.error('❌ Error eliminando del backend:', error.response?.data || error);
+    // Volver a agregar al carrito local si falla
+    cart.value.push(item);
+  }
 }
 
 function calculateTotal() {
   const total = cart.value.reduce((sum, item) => {
-    const price = parseInt(item.precio.replace(/[^\d]/g, ''))
-    return sum + price
-  }, 0)
-  return `$${total.toLocaleString()}`
+    return sum + parseInt(item.precio.replace(/[^\d]/g, ''));
+  }, 0);
+  return `$${total.toLocaleString('es-CO')}`;
 }
 
-// Funciones de scroll mejoradas
-function scrollToProducts() {
-  if (productsSection.value) {
-    const elementTop = productsSection.value.offsetTop - 100 // Offset para navbar fijo
-    window.scrollTo({
-      top: elementTop,
-      behavior: 'smooth'
-    })
-  }
+function toggleCartModal() {
+  showCartModal.value = !showCartModal.value;
 }
 
-function scrollToFilters() {
-  if (filtersSection.value) {
-    const elementTop = filtersSection.value.offsetTop - 100
-    window.scrollTo({
-      top: elementTop,
-      behavior: 'smooth'
-    })
-  }
+function closeCartModal() {
+  showCartModal.value = false;
 }
 
-function scrollToTop() {
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  })
+function openPaymentOptions() {
+  showCartModal.value = false;
+  showPaymentModal.value = true;
 }
 
-function handleScroll() {
-  const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-  showScrollToTop.value = scrollTop > 500
+function closePaymentModal() {
+  showPaymentModal.value = false;
 }
 
-// Funciones de paginación mejoradas
-function goToPage(page) {
-  if (page !== '...' && page >= 1 && page <= totalPages.value) {
-    currentPage.value = page
-    scrollToProducts()
-  }
+function selectPaymentMethod(method) {
+  selectedPaymentMethod.value = method;
 }
 
-function nextPage() {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-    scrollToProducts()
-  }
+function showProductDetail(product) {
+  selectedProduct.value = product;
 }
 
-function previousPage() {
-  if (currentPage.value > 1) {
-    currentPage.value--
-    scrollToProducts()
-  }
+function closeProductDetail() {
+  selectedProduct.value = null;
 }
 
-function goToFirstPage() {
-  currentPage.value = 1
-  scrollToProducts()
-}
+function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
-function goToLastPage() {
-  currentPage.value = totalPages.value
-  scrollToProducts()
-}
+// ==================== WATCHERS: ACTUALIZACIONES EN TIEMPO REAL ====================
+watch(
+  () => store.categories,
+  async (newCategories) => {
+    if (newCategories && newCategories.length > 0) {
+      console.log('📢 Categorías actualizadas en el store:', newCategories);
+      selectedCategory.value = 'Todos';
+      currentPage.value = 1;
+    }
+  },
+  { deep: true }
+);
 
-// Funciones de navegación suave mejoradas
-function smoothScrollTo(targetId) {
-  const element = document.getElementById(targetId)
-  if (element) {
-    const elementTop = element.offsetTop - 80
-    window.scrollTo({
-      top: elementTop,
-      behavior: 'smooth'
-    })
-  }
-}
+watch(
+  () => store.products,
+  () => {
+    console.log('📢 Productos actualizados en el store:', store.products);
+    currentPage.value = 1;
+  },
+  { deep: true }
+);
 
-// Watchers y lifecycle
-watch(() => route.path, () => {
-  checkAuthStatus()
-}, { immediate: true })
-
-// Watcher para resetear la página cuando cambien los filtros
 watch([searchQuery, selectedCategory, sortBy, itemsPerPage], () => {
-  currentPage.value = 1
-  nextTick(() => {
-    scrollToFilters()
-  })
-})
+  currentPage.value = 1;
+});
 
-// Watcher para manejar cambios de página
-watch(currentPage, (newPage, oldPage) => {
-  if (newPage !== oldPage) {
-    nextTick(() => {
-      scrollToProducts()
-    })
-  }
-})
+watch(currentPage, () => nextTick(() => productsSection.value?.scrollIntoView({ behavior: 'smooth' })));
 
-onMounted(() => {
-  checkAuthStatus()
-  window.addEventListener('scroll', handleScroll, { passive: true })
+onMounted(async () => {
+  checkAuthStatus();
+  console.log('🚀 Catálogo montado, cargando datos del store...');
   
-  // Mejorar el scroll para enlaces ancla
-  const anchorLinks = document.querySelectorAll('a[href^="#"]')
-  anchorLinks.forEach(link => {
-    link.addEventListener('click', (e) => {
-      e.preventDefault()
-      const targetId = link.getAttribute('href').slice(1)
-      smoothScrollTo(targetId)
-    })
-  })
-})
+  await store.fetchCategories();
+  await store.fetchProducts();
+  
+  // ✅ AGREGAR ESTA LÍNEA: Cargar carrito si está autenticado
+  await cargarCarritoDesdeBackend();
+  
+  console.log('✅ Categorías en store:', store.categories);
+  console.log('✅ Productos en store:', store.products);
+  console.log('✅ Carrito cargado:', cart.value);
+  
+  window.addEventListener('scroll', () => {
+    showScrollToTop.value = window.scrollY > 500;
+  });
+});
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll)
-})
+  window.removeEventListener('scroll', () => {});
+});
+}
 </script>
 
 <style scoped>
@@ -2010,6 +2167,130 @@ onUnmounted(() => {
   background-size: 400% 400%;
   animation: shimmer 3s ease-in-out infinite;
 }
+
+/* Modal de Opciones de Pago */
+.payment-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2001;
+}
+
+.payment-modal {
+  background: rgba(20, 20, 20, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 20px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+  padding: 2rem;
+}
+
+.payment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.payment-header h3 {
+  color: #FFD700;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.payment-content p {
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 1.5rem;
+}
+
+.payment-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.payment-option {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 12px;
+  padding: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.payment-option:hover {
+  background: rgba(255, 215, 0, 0.15);
+  border-color: #FFD700;
+  color: #FFD700;
+}
+
+.payment-form, .payment-instructions, .payment-confirmation {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.payment-input {
+  width: 100%;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 8px;
+  color: white;
+  font-size: 1rem;
+}
+
+.expiry-cvv {
+  display: flex;
+  gap: 1rem;
+}
+
+.expiry-cvv .payment-input {
+  flex: 1;
+}
+
+.confirm-payment-btn {
+  background: linear-gradient(135deg, #FFD700, #FF4500);
+  color: #000;
+  border: none;
+  padding: 1rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  width: 100%;
+  margin-top: 1rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.confirm-payment-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(255, 215, 0, 0.4);
+}
+
 
 @keyframes shimmer {
   0%, 100% { background-position: 0% 50%; }
