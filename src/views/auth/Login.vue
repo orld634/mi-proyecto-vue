@@ -284,7 +284,8 @@
               ¿Olvidaste tu contraseña?
             </button>
           </div>
-          
+          <span>iniciar sesion con</span>
+         <div id="googleBtn" class="google-login" style="margin-bottom: 1rem; display: flex; justify-content: center;"></div>
           <button type="submit" class="auth-btn" :disabled="isLoading">
             <span v-if="isLoading" class="spinner"></span>
             {{ isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión' }}
@@ -599,88 +600,111 @@ export default {
     }
   },
 
-  methods: {
-    switchView(view) {
-      this.clearMessages();
-      this.currentView = view;
-      if (view !== 'admin') {
-        this.adminLoginData = { email: "", password: "" };
-        this.showAdminPassword = false;
+  watch: {
+    // Vigila el cambio de vista para renderizar el botón de Google si es login
+    currentView(newView) {
+      if (newView === 'login') {
+        this.$nextTick(() => {
+          this.initGoogleButton();
+        });
       }
-    },
-    
-    goHome() {
-      this.$router.push("/");
+    }
+  },
+
+  mounted() {
+  console.log("CLIENT_ID:", import.meta.env.VITE_GOOGLE_CLIENT_ID);
+  console.log("ORIGIN:", window.location.origin);
+  if (this.currentView === 'login') {
+    this.waitForGoogleSDK();
+  }
+},
+
+  methods: {
+
+    // Limpia mensajes para que el flujo de login/registros no se rompa.
+    clearMessages() {
+      this.error = null;
+      this.successMessage = null;
+      this.modalError = "";
+      this.modalSuccess = "";
     },
 
-    backToUserLogin() {
-      this.switchView("login");
-    },
-    
-    clearMessages() {
+
+    // Cambia la vista del componente (login/register/admin) desde el template.
+    switchView(view) {
+      this.currentView = view;
       this.error = null;
       this.successMessage = null;
     },
 
-    async handleLogin() {
-      this.isLoading = true;
-      this.clearMessages();
-      
-      try {
-        if (!this.loginData.email || !this.loginData.password) {
-          throw new Error("Por favor completa todos los campos");
-        }
+    waitForGoogleSDK() {
+  if (typeof google !== 'undefined' && google.accounts) {
+    this.initGoogleButton();
+  } else {
+    setTimeout(this.waitForGoogleSDK, 300);
+  }
+},
+    // --- LÓGICA DE GOOGLE ---
+    initGoogleButton() {
+      if (typeof google === 'undefined') {
+        console.warn("SDK de Google no detectado, reintentando...");
+        setTimeout(this.initGoogleButton, 500);
+        return;
+      }
 
-        const response = await axios.post(
-          "http://localhost:8222/auth/login",
-          this.loginData
-        );
+      google.accounts.id.initialize({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        callback: this.handleGoogleLogin,
+      });
 
-        const { access_token, usuario } = response.data;
-
-        localStorage.setItem("authToken", access_token);
-        localStorage.setItem("usuario", JSON.stringify(usuario));
-
-        this.successMessage = `¡Bienvenido, ${usuario.nombre || usuario.email}!`;
-
-        setTimeout(() => {
-          this.$router.push("/");
-        }, 1000);
-      } catch (err) {
-        this.error =
-          err.response?.data?.message ||
-          "Credenciales incorrectas o error en el servidor.";
-      } finally {
-        this.isLoading = false;
+      const container = document.getElementById("googleBtn");
+      if (container) {
+        google.accounts.id.renderButton(container, {
+          theme: "outline",
+          size: "large",
+          width: 300,
+          text: "signin_with",
+          locale: "es"
+        });
       }
     },
 
+   async handleGoogleLogin(response) {
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/google/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: response.credential }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      // Usar las mismas claves que el login normal
+      localStorage.setItem('authToken', data.access_token);
+      localStorage.setItem('usuario', JSON.stringify(data.usuario));
+      this.successMessage = `¡Bienvenido, ${data.usuario.nombre || data.usuario.email}!`;
+      setTimeout(() => { this.$router.push('/'); }, 1000);
+    } else {
+      this.error = data.message || 'Error al iniciar sesión con Google';
+    }
+  } catch (error) {
+    this.error = 'Error de conexión con el servidor';
+    console.error("Error:", error);
+  }
+},
+
+    // --- MANEJO DE REGISTRO ---
     async handleRegister() {
       this.isLoading = true;
       this.clearMessages();
 
       try {
-        if (
-          !this.registerData.nombre ||
-          !this.registerData.apellido ||
-          !this.registerData.email ||
-          !this.registerData.password ||
-          !this.registerData.confirmPassword
-        ) {
+        if (!this.registerData.nombre || !this.registerData.apellido || !this.registerData.email || !this.registerData.password) {
           throw new Error("Por favor completa todos los campos obligatorios");
         }
-
         if (this.registerData.password !== this.registerData.confirmPassword) {
           throw new Error("Las contraseñas no coinciden");
-        }
-
-        if (this.registerData.password.length < 8) {
-          throw new Error("La contraseña debe tener al menos 8 caracteres");
-        }
-
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(this.registerData.email)) {
-          throw new Error("Por favor ingresa un email válido");
         }
 
         const registerPayload = {
@@ -691,159 +715,109 @@ export default {
           role: this.registerData.role 
         };
 
-        await axios.post("http://localhost:8222/auth/register", registerPayload);
-
-        this.successMessage = "¡Cuenta creada con éxito! Ahora puedes iniciar sesión.";
-
-        this.registerData = {
-          nombre: "",
-          apellido: "",
-          email: "",
-          password: "",
-          confirmPassword: "", 
-          role: "user",
-        };
-        this.acceptTerms = false;
-
+        await axios.post(`${import.meta.env.VITE_API_URL}/auth/register`, registerPayload);
+        this.successMessage = "¡Cuenta creada con éxito!";
+        
         setTimeout(() => {
           this.switchView("login");
         }, 2000);
       } catch (err) {
-        this.error =
-          err.response?.data?.message ||
-          "Error en el registro. Intenta de nuevo.";
+        this.error = err.response?.data?.message || "Error en el registro.";
       } finally {
         this.isLoading = false;
       }
     },
 
+    // --- MANEJO DE ADMIN LOGIN ---
     async handleAdminLogin() {
       this.isLoading = true;
       this.clearMessages();
-
       try {
-        if (!this.adminLoginData.email || !this.adminLoginData.password) {
-          throw new Error("Por favor completa todos los campos");
-        }
-
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(this.adminLoginData.email)) {
-          throw new Error("Por favor ingresa un email válido");
-        }
-
         const response = await axios.post(
-          "http://localhost:8222/auth/admin-login",
+          `${import.meta.env.VITE_API_URL}/auth/admin-login`,
           {
             email: this.adminLoginData.email.trim().toLowerCase(),
             password: this.adminLoginData.password
           }
         );
-
         const { access_token, usuario } = response.data;
+        if (usuario.role !== 'admin') throw new Error("Acceso denegado.");
 
-        // Verificar que el rol sea 'admin'
-        if (usuario.role !== 'admin') {
-          throw new Error("No tienes permisos de administrador");
-        }
-
-        // Guardar el token y los datos del usuario en localStorage
         localStorage.setItem("adminToken", access_token);
         localStorage.setItem("adminUser", JSON.stringify(usuario));
-
-        // Mostrar mensaje de éxito y redirigir al panel de administrador
-        this.successMessage = `¡Bienvenido, administrador ${usuario.nombre || usuario.email}!`;
-        setTimeout(() => {
-          this.$router.push("/admin");
-        }, 1000);
+        this.successMessage = `¡Bienvenido, administrador!`;
+        setTimeout(() => { this.$router.push("/admin"); }, 1000);
       } catch (err) {
-        this.error =
-          err.response?.data?.message ||
-          "Credenciales de administrador incorrectas o error en el servidor.";
+        this.error = err.response?.data?.message || "Error de acceso admin.";
       } finally {
         this.isLoading = false;
       }
     },
 
-    toggleAdminPasswordVisibility() {
-      this.showAdminPassword = !this.showAdminPassword;
-    },
-
+    // --- RECUPERACIÓN DE CONTRASEÑA ---
     openForgotPasswordModal() {
       this.showForgotPasswordModal = true;
       this.currentStep = "email";
-      this.clearModalMessages();
       this.resetForgotPasswordData();
     },
     
     closeForgotPasswordModal() {
       this.showForgotPasswordModal = false;
-      this.clearModalMessages();
-      this.resetForgotPasswordData();
       this.stopTimer();
     },
-    
-    clearModalMessages() {
-      this.modalError = "";
-      this.modalSuccess = "";
-    },
-    
+
     resetForgotPasswordData() {
-      this.forgotPasswordData = {
-        email: "",
-        newPassword: "",
-        confirmPassword: ""
-      };
+      this.forgotPasswordData = { email: "", newPassword: "", confirmPassword: "" };
       this.verificationCode = ["", "", "", "", "", ""];
       this.passwordStrength = 0;
     },
 
     async verifyEmailAndSendCode() {
       this.isProcessing = true;
-      this.clearModalMessages();
-
+      this.modalError = "";
       try {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(this.forgotPasswordData.email)) {
-          throw new Error("Por favor ingresa un email válido");
-        }
-
-        const response = await axios.post("http://localhost:8222/auth/forgot-password/send", {
+        await axios.post(`${import.meta.env.VITE_API_URL}/auth/forgot-password/send`, {
           email: this.forgotPasswordData.email.trim().toLowerCase()
         });
-
-        const isSuccess = response.status === 200 || response.status === 201 || 
-                         response.data.success === true || 
-                         response.data.message;
-
-        if (isSuccess) {
-          this.modalSuccess = "Código de recuperación enviado a tu email.";
-          this.codeTimer = 600;
-          this.startTimer();
-
-          setTimeout(() => {
-            this.currentStep = "code";
-            this.clearModalMessages();
-          }, 2000);
-        } else {
-          throw new Error("Email no encontrado en nuestro sistema.");
-        }
+        this.modalSuccess = "Código enviado.";
+        this.codeTimer = 600;
+        this.startTimer();
+        setTimeout(() => { this.currentStep = "code"; this.modalSuccess = ""; }, 2000);
       } catch (error) {
-        if (error.response?.status === 404) {
-          this.modalError = "Email no encontrado en nuestro sistema.";
-        } else if (error.response?.status === 500) {
-          this.modalError = "Error interno del servidor. Intenta más tarde o contacta soporte.";
-        } else if (error.response?.data?.message) {
-          this.modalError = error.response.data.message;
-        } else if (error.message) {
-          this.modalError = error.message;
-        } else {
-          this.modalError = "Error al procesar tu solicitud. Verifica tu conexión e intenta nuevamente.";
-        }
-      } finally {
-        this.isProcessing = false;
-      }
+        this.modalError = error.response?.data?.message || "Error al enviar código.";
+      } finally { this.isProcessing = false; }
     },
 
+    async verifyResetCode() {
+      this.isProcessing = true;
+      try {
+        const enteredCode = this.verificationCode.join("");
+        await axios.post(`${import.meta.env.VITE_API_URL}/auth/forgot-password/verify`, {
+          email: this.forgotPasswordData.email.trim().toLowerCase(),
+          code: enteredCode
+        });
+        this.modalSuccess = "Código verificado.";
+        setTimeout(() => { this.currentStep = "reset"; this.modalSuccess = ""; }, 1500);
+      } catch (error) {
+        this.modalError = "Código incorrecto.";
+      } finally { this.isProcessing = false; }
+    },
+
+    async resetPassword() {
+      this.isProcessing = true;
+      try {
+        await axios.post(`${import.meta.env.VITE_API_URL}/auth/forgot-password/reset`, {
+          email: this.forgotPasswordData.email.trim().toLowerCase(),
+          newPassword: this.forgotPasswordData.newPassword
+        });
+        this.modalSuccess = "Contraseña cambiada.";
+        setTimeout(() => { this.closeForgotPasswordModal(); }, 2000);
+      } catch (error) {
+        this.modalError = "Error al restablecer.";
+      } finally { this.isProcessing = false; }
+    },
+
+    // --- UTILIDADES ---
     startTimer() {
       if (this.timerInterval) clearInterval(this.timerInterval);
       this.timerInterval = setInterval(() => {
@@ -853,94 +827,22 @@ export default {
     },
     
     stopTimer() {
-      if (this.timerInterval) {
-        clearInterval(this.timerInterval);
-        this.timerInterval = null;
-      }
-    },
-
-    async resendCode() {
-      await this.verifyEmailAndSendCode();
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
     },
 
     handleCodeInput(index, event) {
       const value = event.target.value;
       if (value && /^\d$/.test(value)) {
         this.verificationCode[index] = value;
-        if (index < 5) {
-          const nextInput = this.$refs[`codeInput${index + 1}`][0];
-          if (nextInput) nextInput.focus();
-        }
-      } else if (!value) {
-        this.verificationCode[index] = "";
+        if (index < 5) this.$refs[`codeInput${index + 1}`][0].focus();
       }
     },
 
     handleCodeKeydown(index, event) {
       if (event.key === "Backspace" && !this.verificationCode[index] && index > 0) {
-        const prevInput = this.$refs[`codeInput${index - 1}`][0];
-        if (prevInput) prevInput.focus();
-      } else if (event.key === "ArrowLeft" && index > 0) {
-        const prevInput = this.$refs[`codeInput${index - 1}`][0];
-        if (prevInput) prevInput.focus();
-      } else if (event.key === "ArrowRight" && index < 5) {
-        const nextInput = this.$refs[`codeInput${index + 1}`][0];
-        if (nextInput) nextInput.focus();
+        this.$refs[`codeInput${index - 1}`][0].focus();
       }
-    },
-
-    handleCodePaste(event) {
-      event.preventDefault();
-      const pastedData = event.clipboardData.getData("text").slice(0, 6);
-      if (/^\d{6}$/.test(pastedData)) {
-        for (let i = 0; i < 6; i++) {
-          this.verificationCode[i] = pastedData[i];
-        }
-      }
-    },
-
-    async verifyResetCode() {
-      this.isProcessing = true;
-      this.clearModalMessages();
-
-      try {
-        const enteredCode = this.verificationCode.join("");
-        if (!enteredCode || enteredCode.length !== 6) {
-          throw new Error("Ingresa un código completo de 6 dígitos");
-        }
-
-        const response = await axios.post("http://localhost:8222/auth/forgot-password/verify", {
-          email: this.forgotPasswordData.email.trim().toLowerCase(),
-          code: enteredCode
-        });
-
-        const isSuccess = response.status === 200 || response.data.success === true;
-
-        if (isSuccess) {
-          this.modalSuccess = "¡Código verificado correctamente!";
-          setTimeout(() => {
-            this.currentStep = "reset";
-            this.clearModalMessages();
-          }, 1500);
-        } else {
-          throw new Error("Código incorrecto o expirado.");
-        }
-      } catch (error) {
-        this.modalError = 
-          error.response?.data?.message || 
-          error.message || 
-          "Error al verificar el código. Intenta nuevamente.";
-      } finally {
-        this.isProcessing = false;
-      }
-    },
-
-    toggleNewPasswordVisibility() {
-      this.showNewPassword = !this.showNewPassword;
-    },
-
-    toggleConfirmPasswordVisibility() {
-      this.showConfirmPassword = !this.showConfirmPassword;
     },
 
     validateNewPassword() {
@@ -953,63 +855,16 @@ export default {
       this.passwordStrength = strength;
     },
 
-    async resetPassword() {
-      this.isProcessing = true;
-      this.clearModalMessages();
-      
-      try {
-        if (
-          !this.forgotPasswordData.newPassword ||
-          !this.forgotPasswordData.confirmPassword
-        ) {
-          throw new Error("Completa todos los campos");
-        }
-        if (this.forgotPasswordData.newPassword.length < 8) {
-          throw new Error("La contraseña debe tener al menos 8 caracteres");
-        }
-        if (!this.passwordsMatch) {
-          throw new Error("Las contraseñas no coinciden");
-        }
-        if (this.passwordStrength < 3) {
-          throw new Error("La contraseña no es suficientemente fuerte");
-        }
-
-        const response = await axios.post("http://localhost:8222/auth/forgot-password/reset", {
-          email: this.forgotPasswordData.email.trim().toLowerCase(),
-          newPassword: this.forgotPasswordData.newPassword
-        });
-
-        const isSuccess = response.status === 200 || response.data.success === true;
-
-        if (isSuccess) {
-          this.stopTimer();
-          this.modalSuccess = "¡Contraseña restablecida exitosamente! Ya puedes iniciar sesión.";
-
-          setTimeout(() => {
-            this.loginData.email = this.forgotPasswordData.email;
-            this.closeForgotPasswordModal();
-          }, 2000);
-        } else {
-          throw new Error("Error al restablecer la contraseña.");
-        }
-      } catch (error) {
-        this.modalError = 
-          error.response?.data?.message || 
-          error.message || 
-          "Error al restablecer la contraseña.";
-      } finally {
-        this.isProcessing = false;
-      }
-    }
+    toggleAdminPasswordVisibility() { this.showAdminPassword = !this.showAdminPassword; },
+    toggleNewPasswordVisibility() { this.showNewPassword = !this.showNewPassword; },
+    toggleConfirmPasswordVisibility() { this.showConfirmPassword = !this.showConfirmPassword; }
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     this.stopTimer();
   }
 };
 </script>
-
-
 
 
 <style scoped>

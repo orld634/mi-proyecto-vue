@@ -4,34 +4,23 @@ const MainRoutes = {
     requiresAuth: true,
   },
   redirect: '/',
-  component: () => import('@/views/pages/home.vue'), // Tu archivo home.vue en pages
+  component: () => import('@/views/pages/home.vue'),
   children: [
     {
       name: 'catalogo',
       path: '/catalogo',
       component: () => import('@/views/pages/Catalogo.vue')
     },
-
-    {
-      name: 'promociones',
-      path: '/promociones',
-      component: () => import('@/views/pages/promociones.vue'),
-      
-    }, 
     {
       name: 'admin',
       path: '/admin',
       component: () => import('@/views/pages/admin.vue'),
       meta: {
-        requiresAuth: false, // Esta ruta no requiere autenticación
-        hideNavigation: true, // Para ocultar la navegación principal
-        layout: 'auth' // Layout específico para autenticación
+        requiresAuth: false,
+        hideNavigation: true,
+        layout: 'auth'
       }
-    }, 
-
-    
-
-
+    },
     {
       name: 'dashboard',
       path: '/',
@@ -72,25 +61,31 @@ const MainRoutes = {
         requiresAuth: true,
       }
     },
-    // Nueva ruta hija para login
     {
       name: 'login',
       path: '/login',
       component: () => import('@/views/auth/Login.vue'),
       meta: {
-        requiresAuth: false, // Esta ruta no requiere autenticación
-        hideNavigation: true, // Para ocultar la navegación principal
-        layout: 'auth' // Layout específico para autenticación
+        requiresAuth: false,
+        hideNavigation: true,
+        layout: 'auth'
       }
     },
-    
-    { 
-    path: '/users', 
-    name: 'Users',
-    component: 'Users'
+    {
+      path: '/users',
+      name: 'Users',
+      component: 'Users'
     },
-
   ],
+};
+
+export const PromoRoutes = {
+  path: '/promociones',
+  name: 'promociones',
+  component: () => import('@/views/pages/promociones.vue'),
+  meta: {
+    requiresAuth: false
+  }
 };
 
 export default MainRoutes;

@@ -1,101 +1,252 @@
 <template>
-  <div class="promotions-page">
-    <!-- Fondo animado con partículas doradas -->
-    <div class="particles-bg"></div>
-    <div class="background-overlay"></div>
+  <div class="promo-page">
 
-    <!-- Hero Premium -->
-    <section class="promotions-hero">
+    <!-- ══════════════ NAVBAR ══════════════ -->
+    <nav class="navbar" :class="{ scrolled: isScrolled }">
+      <div class="nav-bg-art"/>
+      <div class="nav-bg-overlay"/>
+
+      <div class="nav-inner">
+        <router-link to="/" class="brand">
+          <span class="brand-text">Brindis Express</span>
+        </router-link>
+
+        <div class="nav-links">
+          <router-link to="/" class="nlink">
+            <span class="nlink-icon">🏠</span><span>Inicio</span>
+          </router-link>
+          <router-link to="/catalogo" class="nlink">
+            <span class="nlink-icon">📦</span><span>Catálogo</span>
+          </router-link>
+          <router-link to="/promociones" class="nlink nlink-active">
+            <span class="nlink-icon">🎯</span><span>Promociones</span>
+          </router-link>
+          <a href="#" class="nlink" @click.prevent="showTerms = true">
+            <span class="nlink-icon">📜</span><span>Política</span>
+          </a>
+          <a href="#contacto" class="nlink">
+            <span class="nlink-icon">📞</span><span>Contáctanos</span>
+          </a>
+        </div>
+
+        <div class="nav-auth">
+          <template v-if="isAuthenticated">
+            <div class="user-pill">
+              <span>👤</span>
+              <span>Hola, {{ userName }}!</span>
+            </div>
+            <button class="btn-cerrar" @click="logout">🚪 Cerrar Sesión</button>
+          </template>
+          <template v-else>
+            <router-link to="/login" class="btn-login">
+              <span>🔑</span> Iniciar Sesión
+            </router-link>
+          </template>
+        </div>
+
+        <button class="hamburger" @click="mobileOpen = !mobileOpen" :class="{ open: mobileOpen }">
+          <span/><span/><span/>
+        </button>
+      </div>
+
+      <div class="nav-arrow nav-arrow-left">❮</div>
+      <div class="nav-arrow nav-arrow-right">❯</div>
+
+      <transition name="mob-drop">
+        <div class="mob-menu" v-if="mobileOpen">
+          <router-link to="/"            class="mob-item" @click="mobileOpen=false">🏠 Inicio</router-link>
+          <router-link to="/catalogo"    class="mob-item" @click="mobileOpen=false">📦 Catálogo</router-link>
+          <router-link to="/promociones" class="mob-item mob-active" @click="mobileOpen=false">🎯 Promociones</router-link>
+          <a href="#" class="mob-item" @click.prevent="showTerms=true; mobileOpen=false">📜 Política</a>
+          <a href="#contacto" class="mob-item" @click="mobileOpen=false">📞 Contáctanos</a>
+          <template v-if="isAuthenticated">
+            <button class="mob-item mob-logout" @click="logout">🚪 Cerrar Sesión</button>
+          </template>
+          <template v-else>
+            <router-link to="/login" class="mob-item mob-login" @click="mobileOpen=false">🔑 Iniciar Sesión</router-link>
+          </template>
+        </div>
+      </transition>
+    </nav>
+
+    <!-- ══════════════ HERO ══════════════ -->
+    <section class="hero">
+      <div class="hero-bg-main"/>
+      <div class="hero-bg-glow"/>
+      <div class="hero-bg-vignette"/>
+      <div class="hero-scanlines"/>
+
       <div class="hero-content">
+        <div class="hero-eyebrow">
+          <span class="eyebrow-line"/>
+          <span class="eyebrow-text">Ofertas Exclusivas</span>
+          <span class="eyebrow-line eyebrow-line-r"/>
+        </div>
+
         <h1 class="hero-title">
-          <span class="gold-text">Promociones</span> Exclusivas
+          <span class="ht-main">Promociones</span>
+          <span class="ht-accent">Premium</span>
         </h1>
-        <p class="hero-subtitle">
-          Ofertas reservadas solo para los que saben disfrutar lo mejor
-        </p>
-        <div class="countdown-timer" v-if="hasActiveCountdown">
-          <span>Termina en</span>
-          <div class="timer">
-            {{ countdown.days }}d {{ countdown.hours }}h {{ countdown.minutes }}m {{ countdown.seconds }}s
+
+        <p class="hero-desc">Descuentos reservados para paladares exigentes</p>
+
+        <div class="countdown-box" v-if="hasCountdown">
+          <div class="cb-label">Oferta especial termina en</div>
+          <div class="cb-timer">
+            <div class="cb-unit">
+              <span class="cb-num">{{ countdown.days }}</span>
+              <span class="cb-tag">DÍAS</span>
+            </div>
+            <span class="cb-sep"/>
+            <div class="cb-unit">
+              <span class="cb-num">{{ countdown.hours }}</span>
+              <span class="cb-tag">HORAS</span>
+            </div>
+            <span class="cb-sep"/>
+            <div class="cb-unit">
+              <span class="cb-num">{{ countdown.minutes }}</span>
+              <span class="cb-tag">MIN</span>
+            </div>
+            <span class="cb-sep"/>
+            <div class="cb-unit">
+              <span class="cb-num">{{ countdown.seconds }}</span>
+              <span class="cb-tag">SEG</span>
+            </div>
           </div>
         </div>
+
+        <div class="hero-scroll-hint">
+          <span class="scroll-text">Ver ofertas</span>
+          <div class="scroll-arrow-wrap"/>
+        </div>
       </div>
-      <div class="hero-scroll-hint">↓ Descubre las ofertas</div>
+
+      <div class="hero-deco-left"/>
+      <div class="hero-deco-right"/>
     </section>
 
-    <!-- Filtros Premium (Glassmorphism + 3D hover) -->
-    <div class="filters-container">
-      <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        @click="activeTab = tab.id"
-        :class="['filter-tab', { active: activeTab === tab.id }]"
-      >
-        <span class="tab-icon">{{ tab.icon }}</span>
-        {{ tab.label }}
-        <span v-if="tab.badge" class="tab-badge">{{ tab.badge }}</span>
-      </button>
-    </div>
-
-    <!-- Grid de promociones -->
-    <div class="promotions-grid">
-      <div
-        v-for="promo in filteredPromotions"
-        :key="promo.id"
-        class="promo-card"
-        :class="promo.rarity"
-        @mouseenter="hoverCard = promo.id"
-        @mouseleave="hoverCard = null"
-      >
-        <!-- Badge diagonal premium -->
-        <div class="promo-badge" v-if="promo.exclusive">
-          <span>{{ promo.exclusive }}</span>
-        </div>
-
-        <!-- Imagen con efecto parallax -->
-        <div class="promo-image">
-          <img :src="promo.image" :alt="promo.title" />
-          <div class="image-overlay"></div>
-          <div class="shine-effect"></div>
-        </div>
-
-        <div class="promo-content">
-          <h3 class="promo-title">{{ promo.title }}</h3>
-          <p class="promo-description">{{ promo.description }}</p>
-
-          <div class="promo-price">
-            <div class="original-price" v-if="promo.originalPrice">
-              {{ promo.originalPrice }}
-            </div>
-            <div class="final-price">
-              {{ getPriceForUser(promo) }}
-            </div>
-            <div class="discount-tag" v-if="promo.discount">
-              {{ promo.discount }}
-            </div>
-          </div>
-
-          <div class="promo-tags" v-if="promo.tags">
-            <span v-for="tag in promo.tags" :key="tag" class="tag">{{ tag }}</span>
-          </div>
-
-          <button @click="buyNow(promo)" class="buy-btn">
-            <span class="btn-icon">Flash</span>
-            Comprar Ahora
-          </button>
-        </div>
-
-        <div class="promo-timer" v-if="promo.endsAt">
-          Time left Termina en {{ formatTimeLeft(promo.endsAt) }}
-        </div>
+    <!-- ══════════════ FILTROS ══════════════ -->
+    <div class="filters-wrap">
+      <div class="filters">
+        <button
+          v-for="tab in tabs"
+          :key="tab.id"
+          :class="['ftab', { 'ftab-active': activeTab === tab.id }]"
+          @click="activeTab = tab.id"
+        >
+          <span class="ftab-icon">{{ tab.icon }}</span>
+          <span class="ftab-label">{{ tab.label }}</span>
+          <span v-if="tab.badge" class="ftab-badge">{{ tab.badge }}</span>
+        </button>
       </div>
     </div>
 
-    <div v-if="filteredPromotions.length === 0" class="empty-state">
-      <div class="empty-icon">Empty glass</div>
-      <h3>No hay promociones disponibles en este momento</h3>
-      <p>¡Vuelve pronto o sube de categoría para acceder a ofertas exclusivas!</p>
+    <!-- ══════════════ GRID ══════════════ -->
+    <div class="grid-wrap">
+      <div class="section-header">
+        <div class="sh-line"/>
+        <span class="sh-text">{{ filteredPromos.length }} Promociones Disponibles</span>
+        <div class="sh-line"/>
+      </div>
+
+      <div class="promo-grid">
+        <div
+          v-for="(promo, i) in filteredPromos"
+          :key="promo.id"
+          class="pcard"
+          :class="[`pcard-${promo.rarity}`, `ad-${i % 6}`]"
+        >
+          <div class="pcard-accent-bar"/>
+
+          <div class="pcard-ribbon" v-if="promo.exclusive">
+            <span>{{ promo.exclusive }}</span>
+          </div>
+
+          <div class="pcard-img-wrap">
+            <div class="pcard-img">
+              <img :src="promo.image" :alt="promo.nombre_promocion" loading="lazy"/>
+            </div>
+            <div class="pcard-img-overlay"/>
+            <div class="pcard-img-gradient"/>
+
+            <div class="pcard-badges-row">
+              <div class="pcard-timer" v-if="promo.fecha_fin">
+                <span class="timer-dot"/>
+                {{ timeLeft(promo.fecha_fin) }}
+              </div>
+              <div class="pcard-discount-chip" v-if="promo.descuento">{{ promo.descuento }}% OFF</div>
+            </div>
+          </div>
+
+          <div class="pcard-body">
+            <div class="pcard-tags" v-if="promo.tags">
+              <span v-for="t in promo.tags" :key="t" class="ptag">{{ t }}</span>
+            </div>
+            <h3 class="pcard-title">{{ promo.nombre_promocion }}</h3>
+            <p class="pcard-desc">{{ promo.descripcion }}</p>
+            <div class="pcard-divider"/>
+            <div class="pcard-price-row">
+              <div class="pcard-price">
+                <span class="pp-old" v-if="promo.precio_original">{{ formatPrice(promo.precio_original) }}</span>
+                <span class="pp-new">{{ formatPrice(promo.precio_promocional) }}</span>
+              </div>
+              <button class="pcard-btn" @click="buy(promo)">
+                <span class="btn-label">Comprar</span>
+                <span class="btn-ico">⚡</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="pcard-glow"/>
+        </div>
+      </div>
+
+      <div class="empty" v-if="filteredPromos.length === 0">
+        <div class="empty-ico">🍾</div>
+        <h3>Sin promociones en esta categoría</h3>
+        <p>Intenta otro filtro o vuelve pronto</p>
+        <button class="empty-btn" @click="activeTab = 'all'">Ver todas</button>
+      </div>
     </div>
+
+    <!-- ══════════════ FOOTER ══════════════ -->
+    <footer class="footer" id="contacto">
+      <div class="footer-top-border"/>
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <span class="fb-emblem">🥃</span>
+          <div>
+            <span class="fb-name">Brindis Express</span>
+            <p class="fb-tagline">Experiencia Premium en Bebidas</p>
+          </div>
+        </div>
+        <div class="footer-links">
+          <a href="tel:+573023723919"                   class="flink">📞 +57 302 372 3919</a>
+          <a href="mailto:contacto@brindisexpress.com"  class="flink">✉️ contacto@brindisexpress.com</a>
+          <span class="flink">📍 Calle 30, Carrera 34 #1</span>
+        </div>
+      </div>
+      <p class="footer-copy">© 2025 Brindis Express · Todos los derechos reservados · Solo para mayores de 18 años</p>
+    </footer>
+
+    <!-- ══════════════ MODAL TÉRMINOS ══════════════ -->
+    <transition name="fade">
+      <div class="modal-bg" v-if="showTerms" @click.self="showTerms = false">
+        <div class="modal">
+          <button class="modal-x" @click="showTerms = false">✕</button>
+          <div class="modal-icon">⚖️</div>
+          <h2 class="modal-title">Política y Términos</h2>
+          <p class="modal-text">
+            Al usar Brindis Express aceptas nuestros términos de servicio. Solo para mayores de 18 años.
+            Promovemos el consumo responsable. Los precios incluyen impuestos aplicables.
+            Los reembolsos aplican únicamente para productos defectuosos o no entregados.
+            Última actualización: octubre 2025.
+          </p>
+          <button class="modal-ok" @click="showTerms = false">Entendido</button>
+        </div>
+      </div>
+    </transition>
+
   </div>
 </template>
 
@@ -103,499 +254,658 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 
-// Estado de autenticación (reutilizamos la misma lógica que tienes en App.vue)
+const router = useRouter()
+
 const isAuthenticated = ref(false)
-const userRole = ref('user') // user | vip | premium | admin
+const userName        = ref('')
+const isScrolled      = ref(false)
+const mobileOpen      = ref(false)
+const showTerms       = ref(false)
+const activeTab       = ref('all')
 
-// Tabs de filtro
 const tabs = [
-  { id: 'all', label: 'Todas', icon: '🎁' },
-  { id: 'vip', label: 'VIP', icon: '⭐', badge: '15%' },
-  { id: 'premium', label: 'Premium', icon: '💎', badge: '25%' },
-  { id: 'limited', label: 'Tiempo Limitado', icon: '⏰' }
+  { id: 'all',     label: 'Todas',           icon: '🎁' },
+  { id: 'vip',     label: 'VIP',             icon: '⭐', badge: '-15%' },
+  { id: 'premium', label: 'Premium',         icon: '💎', badge: '-25%' },
+  { id: 'limited', label: 'Tiempo Limitado', icon: '⏰' },
 ]
-const activeTab = ref('all')
 
-// Datos de promociones (puedes mover esto a una API o store más adelante)
-const promotions = ref([
+const promos = ref([
   {
     id: 1,
-    title: 'Jack Daniel’s Old No.7 - 1L',
-    description: 'Whisky americano icónico con notas de vainilla y caramelo.',
+    nombre_promocion: "Jack Daniel's Old No.7 - 1L",
+    descripcion: 'Whisky americano icónico con notas de vainilla y caramelo tostado.',
     image: 'https://lacaretalicores.com/cdn/shop/products/jackdaniels1l_1200x1200.jpg',
-    basePrice: '$115,000',
-    originalPrice: '$145,000',
-    discount: '21% OFF',
-    exclusive: 'VIP & Premium',
-    rarity: 'vip',
-    tags: ['Whisky', 'Importado', 'Edición Especial'],
-    endsAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 horas
+    precio_promocional: 115000, precio_original: 145000, descuento: 21,
+    exclusive: 'VIP & Premium', rarity: 'vip',
+    tags: ['Whisky', 'Importado', 'Especial'],
+    fecha_fin: new Date(Date.now() + 24 * 3600000),
   },
   {
     id: 2,
-    title: 'Dom Pérignon Vintage 2015',
-    description: 'Champagne francés de lujo. Solo para los más exigentes.',
+    nombre_promocion: 'Dom Pérignon Vintage 2015',
+    descripcion: 'Champagne francés de lujo. Solo para los más exigentes.',
     image: 'https://muttsmousers.ca/media/catalog/product/cache/6ab565c3c7e8d6f3f386bd0dc87c9acc/d/o/dog_perignon_gift_set2_grande2.jpg',
-    basePrice: '$380,000',
-    originalPrice: '$520,000',
-    discount: '27% OFF',
-    exclusive: 'Solo Premium',
-    rarity: 'premium',
+    precio_promocional: 380000, precio_original: 520000, descuento: 27,
+    exclusive: 'Solo Premium', rarity: 'premium',
     tags: ['Champagne', 'Lujo', 'Exclusivo'],
-    endsAt: new Date(Date.now() + 48 * 60 * 60 * 1000) // 48 horas
+    fecha_fin: new Date(Date.now() + 48 * 3600000),
   },
   {
     id: 3,
-    title: 'Buchanan’s 18 Años',
-    description: 'Edición especial 18 años con caja de regalo.',
+    nombre_promocion: "Buchanan's 18 Años",
+    descripcion: 'Edición especial 18 años con caja de regalo incluida.',
     image: 'https://lacaretalicores.com/cdn/shop/files/WhatsAppImage2024-05-21at4.36.34PM.jpg',
-    basePrice: '$165,000',
-    originalPrice: null,
-    discount: 'Oferta Flash',
-    exclusive: null,
-    rarity: 'limited',
+    precio_promocional: 165000, precio_original: null, descuento: null,
+    exclusive: null, rarity: 'limited',
     tags: ['Whisky', 'Escocia', 'Regalo'],
-    endsAt: new Date(Date.now() + 6 * 60 * 60 * 1000) // 6 horas
+    fecha_fin: new Date(Date.now() + 6 * 3600000),
   },
   {
     id: 4,
-    title: 'Patrón Silver 750ml',
-    description: 'Tequila 100% agave azul. Suave y premium.',
-    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5p7fJ8i0rR8i6z9vX7k8J9k0oP9oM9k8J8',
-    basePrice: '$190,000',
-    originalPrice: '$240,000',
-    discount: '20% OFF',
-    exclusive: 'VIP',
-    rarity: 'vip',
-    tags: ['Tequila', 'México', 'Premium']
-  }
+    nombre_promocion: 'Patrón Silver 750ml',
+    descripcion: 'Tequila 100% agave azul. Suave, premium y perfecto para celebrar.',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Patron_silver.jpg/800px-Patron_silver.jpg',
+    precio_promocional: 190000, precio_original: 240000, descuento: 20,
+    exclusive: 'VIP', rarity: 'vip',
+    tags: ['Tequila', 'México', 'Premium'],
+    fecha_fin: new Date(Date.now() + 12 * 3600000),
+  },
 ])
 
-// Filtro según tab activo y rol
-const filteredPromotions = computed(() => {
-  return promotions.value.filter(promo => {
-    if (activeTab.value === 'all') return true
-    if (activeTab.value === 'vip' && promo.rarity === 'vip') return true
-    if (activeTab.value === 'premium' && promo.rarity === 'premium') return true
-    if (activeTab.value === 'limited' && promo.endsAt) return true
-    return false
-  })
-})
+const filteredPromos = computed(() => promos.value.filter(p => {
+  if (activeTab.value === 'all')                               return true
+  if (activeTab.value === 'vip'     && p.rarity === 'vip')    return true
+  if (activeTab.value === 'premium' && p.rarity === 'premium') return true
+  if (activeTab.value === 'limited' && p.fecha_fin)           return true
+  return false
+}))
 
-// Precio según rol
-function getPriceForUser(promo) {
-  const price = parseInt(promo.basePrice.replace(/[$,]/g, ''))
-  if (userRole.value === 'vip') return `$${(price * 0.85).toLocaleString()}`
-  if (userRole.value === 'premium') return `$${(price * 0.75).toLocaleString()}`
-  return promo.basePrice
+function formatPrice(n) {
+  if (!n) return ''
+  return '$' + Number(n).toLocaleString('es-CO')
+}
+function timeLeft(date) {
+  const d = new Date(date) - new Date()
+  if (d <= 0) return 'Finalizada'
+  return `${Math.floor(d / 3600000)}h ${Math.floor((d % 3600000) / 60000)}m`
+}
+function buy(p) {
+  if (!isAuthenticated.value) { router.push('/login'); return }
+  alert(`¡Seleccionaste: ${p.nombre_promocion}`)
+}
+function logout() {
+  localStorage.removeItem('authToken')
+  localStorage.removeItem('usuario')
+  isAuthenticated.value = false
+  userName.value = ''
+  router.push('/login')
 }
 
-// Temporizador global (ej: promoción general)
-const countdown = ref({ days: 0, hours: 0, minutes: 0, seconds: 0 })
-const hasActiveCountdown = ref(true)
-let timerInterval = null
+const countdown    = ref({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+const hasCountdown = ref(true)
+let timerInterval  = null
 
-function updateCountdown() {
-  const end = new Date('2025-12-01T00:00:00') // Cambia por la fecha real de tu promo
-  const now = new Date()
-  const diff = end - now
-
-  if (diff <= 0) {
-    hasActiveCountdown.value = false
-    clearInterval(timerInterval)
-    return
-  }
-
+function tick() {
+  const diff = new Date('2026-04-01T00:00:00') - new Date()
+  if (diff <= 0) { hasCountdown.value = false; return }
   countdown.value = {
-    days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-    hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-    minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
-    seconds: Math.floor((diff % (1000 * 60)) / 1000)
+    days:    Math.floor(diff / 86400000),
+    hours:   Math.floor((diff % 86400000) / 3600000),
+    minutes: Math.floor((diff % 3600000) / 60000),
+    seconds: Math.floor((diff % 60000) / 1000),
   }
 }
 
-function formatTimeLeft(date) {
-  const diff = new Date(date) - new Date()
-  if (diff <= 0) return 'Finalizada'
-  const h = Math.floor(diff / (1000 * 60 * 60))
-  const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-  return `${h}h ${m}m`
-}
-
-const router = useRouter()
-function buyNow(promo) {
-  if (!isAuthenticated.value) {
-    router.push('/login')
-    return
-  }
-  // Aquí iría la lógica real de compra o redirección
-  alert(`¡Genial! Has seleccionado: ${promo.title}`)
-}
-
-// Simulación de autenticación (igual que en tu App.vue)
 onMounted(() => {
-  const token = localStorage.getItem('authToken')
-  const user = localStorage.getItem('user')
-  if (token && user) {
-    isAuthenticated.value = true
-    const userData = JSON.parse(user)
-    userRole.value = userData.role || 'user'
-  }
-  updateCountdown()
-  timerInterval = setInterval(updateCountdown, 1000)
-})
-
-onUnmounted(() => {
-  if (timerInterval) clearInterval(timerInterval)
+  try {
+    const token = localStorage.getItem('authToken')
+    const user  = localStorage.getItem('usuario')
+    if (token && user && user !== 'undefined') {
+      const u = JSON.parse(user)
+      isAuthenticated.value = true
+      userName.value = u.nombre || u.email || 'Usuario'
+    }
+  } catch {}
+  tick()
+  timerInterval = setInterval(tick, 1000)
+  const onScroll = () => { isScrolled.value = window.scrollY > 50 }
+  window.addEventListener('scroll', onScroll)
+  onUnmounted(() => {
+    clearInterval(timerInterval)
+    window.removeEventListener('scroll', onScroll)
+  })
 })
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Cinzel:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
 
-.promotions-page {
-  position: relative;
+:root {
+  --gold:    #C9A84C;
+  --gold-lt: #E8C97A;
+  --gold-dk: #8B6914;
+  --amber:   #E87B2B;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ══ BASE ══ */
+.promo-page {
   min-height: 100vh;
-  font-family: 'Inter', sans-serif;
+  background:
+    repeating-linear-gradient(90deg, transparent 0px, transparent 119px, rgba(201,168,76,0.025) 120px),
+    repeating-linear-gradient(0deg,  transparent 0px, transparent 119px, rgba(201,168,76,0.025) 120px),
+    radial-gradient(ellipse 80% 50% at 20% 90%, rgba(232,123,43,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 10%, rgba(201,168,76,0.08) 0%, transparent 60%),
+    linear-gradient(160deg, #110E08 0%, #0D0A07 40%, #130F0A 70%, #0A0807 100%);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
   overflow-x: hidden;
 }
 
-/* Partículas doradas animadas */
-.particles-bg {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background: 
-    radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.06) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(255, 100, 0, 0.05) 0%, transparent 50%);
-  animation: float 20s ease-in-out infinite;
-  z-index: 1;
+/* ══ NAVBAR ══ */
+.navbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+  height: 90px; overflow: hidden;
+  transition: height 0.4s ease, box-shadow 0.4s ease;
+  box-shadow: 0 4px 30px rgba(0,0,0,0.6);
+}
+.navbar.scrolled { height: 70px; }
+
+.nav-bg-art {
+  position: absolute; inset: 0; z-index: 0;
+  background: url('https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
+  filter: brightness(0.55) saturate(1.3); transition: filter 0.4s;
+}
+.navbar.scrolled .nav-bg-art { filter: brightness(0.35) saturate(1.2); }
+
+.nav-bg-overlay {
+  position: absolute; inset: 0; z-index: 1;
+  background:
+    linear-gradient(90deg, rgba(60,30,5,0.82) 0%, rgba(20,12,3,0.65) 30%, rgba(20,12,3,0.65) 70%, rgba(60,30,5,0.82) 100%),
+    linear-gradient(180deg, rgba(180,120,20,0.18) 0%, transparent 40%, transparent 60%, rgba(180,120,20,0.12) 100%);
+  border-top: 2px solid rgba(201,168,76,0.5);
+  border-bottom: 1px solid rgba(201,168,76,0.35);
+}
+.nav-bg-overlay::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.6) 20%, rgba(255,200,60,0.9) 50%, rgba(201,168,76,0.6) 80%, transparent);
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-30px) rotate(1deg); }
+.nav-arrow {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  font-size: 2.5rem; color: rgba(201,168,76,0.55); pointer-events: none; z-index: 2;
+  text-shadow: 0 0 20px rgba(201,168,76,0.4); line-height: 1;
+}
+.nav-arrow-left  { left: 1rem; }
+.nav-arrow-right { right: 1rem; }
+
+.nav-inner {
+  position: relative; z-index: 3;
+  max-width: 1280px; margin: 0 auto; height: 100%;
+  display: flex; align-items: center; gap: 1.5rem; padding: 0 3.5rem;
 }
 
-.background-overlay {
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
-  z-index: 1;
+.brand { text-decoration: none; flex-shrink: 0; }
+.brand-text {
+  font-family: 'Cinzel', serif; font-size: 1.55rem; font-weight: 700; letter-spacing: 4px;
+  background: linear-gradient(135deg, #FFE066 0%, #C9A84C 45%, #E87B2B 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  filter: drop-shadow(0 2px 8px rgba(201,168,76,0.5));
 }
 
-/* Hero Ultra Premium */
-.promotions-hero {
-  position: relative;
-  height: 90vh;
-  min-height: 680px;
-  background: linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.95)),
-              url('https://images.unsplash.com/photo-1517783972485-52b8c2e9db34?ixlib=rb-4.0.3&auto=format&fit=crop&q=80') center/cover no-repeat;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: white;
-  z-index: 2;
+.nav-links { display: flex; align-items: center; gap: 0.5rem; flex: 1; justify-content: center; }
+.nlink {
+  display: flex; align-items: center; gap: 0.5rem;
+  color: rgba(240,220,180,0.9); text-decoration: none;
+  font-size: 0.88rem; font-weight: 600;
+  padding: 0.55rem 1.1rem; border-radius: 30px;
+  background: rgba(10,7,3,0.72); border: 1px solid rgba(100,80,30,0.5);
+  backdrop-filter: blur(8px); transition: all 0.25s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+.nlink:hover {
+  color: #FFE066; background: rgba(10,7,3,0.9); border-color: rgba(201,168,76,0.6);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.6), 0 0 12px rgba(201,168,76,0.2);
+  transform: translateY(-1px);
+}
+.nlink-icon { font-size: 0.85rem; }
+.nlink-active {
+  color: #FFE066 !important; background: rgba(10,7,3,0.88) !important;
+  border-color: rgba(201,168,76,0.55) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.6), 0 0 14px rgba(201,168,76,0.25) !important;
 }
 
-.hero-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(4rem, 8vw, 7rem);
-  font-weight: 700;
-  line-height: 1;
-  margin-bottom: 1rem;
-  background: linear-gradient(90deg, #FFD700, #FFA500, #FFD700);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 0 80px rgba(255, 215, 0, 0.5);
+.nav-auth { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; }
+.user-pill {
+  display: flex; align-items: center; gap: 0.5rem;
+  background: rgba(10,7,3,0.75); border: 1px solid rgba(100,80,30,0.5);
+  border-radius: 30px; padding: 0.5rem 1rem; color: rgba(240,220,180,0.9);
+  font-size: 0.82rem; font-weight: 600;
+}
+.btn-cerrar {
+  display: flex; align-items: center; gap: 0.4rem;
+  background: linear-gradient(135deg, #c0392b, #96281b);
+  border: none; color: #fff; padding: 0.55rem 1.1rem; border-radius: 30px;
+  cursor: pointer; font-size: 0.82rem; font-weight: 700; font-family: inherit; transition: all 0.25s;
+}
+.btn-cerrar:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(192,57,43,0.7); }
+.btn-login {
+  display: flex; align-items: center; gap: 0.4rem;
+  color: rgba(240,220,180,0.9); text-decoration: none;
+  font-size: 0.82rem; font-weight: 600; padding: 0.55rem 1.1rem; border-radius: 30px;
+  background: rgba(10,7,3,0.72); border: 1px solid rgba(100,80,30,0.5);
+  backdrop-filter: blur(8px); transition: all 0.25s;
+}
+.btn-login:hover { color: #FFE066; border-color: rgba(201,168,76,0.6); transform: translateY(-1px); }
+
+.hamburger {
+  display: none; flex-direction: column; gap: 5px;
+  background: rgba(10,7,3,0.72); border: 1px solid rgba(100,80,30,0.5);
+  border-radius: 8px; cursor: pointer; padding: 8px; margin-left: auto; position: relative; z-index: 3;
+}
+.hamburger span { display: block; width: 20px; height: 2px; background: var(--gold); transition: all 0.3s; border-radius: 2px; }
+.hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px,5px); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
+
+.mob-menu {
+  position: relative; z-index: 3;
+  display: flex; flex-direction: column; gap: 0.1rem; padding: 0.8rem 1.5rem 1.2rem;
+  background: rgba(8,5,2,0.97); border-top: 1px solid rgba(201,168,76,0.15);
+}
+.mob-item {
+  color: rgba(220,190,140,0.8); text-decoration: none;
+  padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
+  transition: all 0.2s; border: none; cursor: pointer; background: transparent;
+  font-family: inherit; text-align: left;
+}
+.mob-item:hover { color: #FFE066; background: rgba(201,168,76,0.08); }
+.mob-active { color: #FFE066 !important; }
+.mob-logout { color: rgba(220,100,80,0.85); }
+.mob-login  { color: #FFE066; font-weight: 700; }
+.mob-drop-enter-active, .mob-drop-leave-active { transition: all 0.2s ease; }
+.mob-drop-enter-from, .mob-drop-leave-to { opacity: 0; transform: translateY(-6px); }
+
+/* ══ HERO ══ */
+.hero {
+  position: relative; padding-top: 90px; min-height: 92vh;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  overflow: hidden;
 }
 
-.gold-text {
-  display: block;
-  font-size: 1.2em;
+/* Capas del hero con z-index explícitos */
+.hero-bg-main {
+  position: absolute; inset: 0; z-index: 0;
+  background:
+    linear-gradient(rgba(8,5,2,0.55) 0%, rgba(8,5,2,0.75) 100%),
+    url('https://images.unsplash.com/photo-1551538827-9c037cb4f32a?auto=format&fit=crop&q=80')
+    center/cover no-repeat;
+}
+.hero-bg-glow {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 100%, rgba(232,123,43,0.2) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 15% 50%, rgba(201,168,76,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 85% 30%, rgba(232,123,43,0.08) 0%, transparent 60%);
+}
+.hero-bg-vignette {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background: radial-gradient(ellipse 100% 100% at 50% 50%, transparent 40%, rgba(0,0,0,0.6) 100%);
+}
+.hero-scanlines {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 4px);
 }
 
-.hero-subtitle {
-  font-size: 1.5rem;
-  max-width: 800px;
-  margin: 0 auto 2.5rem;
-  opacity: 0.9;
-  font-weight: 500;
+.hero-content { position: relative; z-index: 4; padding: 0 2rem; max-width: 860px; }
+
+.hero-eyebrow {
+  display: flex; align-items: center; justify-content: center; gap: 1.2rem; margin-bottom: 2rem;
+}
+.eyebrow-line {
+  display: block; width: 60px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold));
+}
+.eyebrow-line-r { background: linear-gradient(270deg, transparent, var(--gold)); }
+.eyebrow-text {
+  font-family: 'Cinzel', serif; font-size: 0.72rem; letter-spacing: 5px;
+  text-transform: uppercase; color: var(--gold); font-weight: 600;
 }
 
-.countdown-timer {
-  background: rgba(255, 69, 0, 0.2);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 69, 0, 0.3);
-  padding: 1rem 2.5rem;
-  border-radius: 50px;
-  font-weight: 600;
-  display: inline-flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  box-shadow: 0 10px 30px rgba(255, 69, 0, 0.2);
+.hero-title { display: flex; flex-direction: column; gap: 0.2rem; margin-bottom: 1.2rem; }
+.ht-main {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(3.5rem, 9vw, 7.5rem); font-weight: 700; line-height: 0.9;
+  letter-spacing: 6px; text-transform: uppercase;
+  background: linear-gradient(160deg, #E8C97A 0%, #C9A84C 40%, #E87B2B 80%, #C9A84C 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  filter: drop-shadow(0 0 30px rgba(201,168,76,0.35));
+}
+.ht-accent {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.5rem, 4vw, 3rem); font-weight: 400; font-style: italic;
+  color: rgba(220,190,140,0.55); letter-spacing: 10px; text-transform: uppercase;
 }
 
-.timer {
-  font-family: 'Courier New', monospace;
-  font-size: 2rem;
-  font-weight: bold;
-  letter-spacing: 4px;
-  color: #FF4500;
-  text-shadow: 0 0 20px rgba(255, 69, 0, 0.6);
+.hero-desc {
+  font-size: 1rem; color: rgba(200,175,130,0.55);
+  margin: 1.2rem auto 2.5rem; max-width: 420px; line-height: 1.7; font-weight: 300;
+}
+
+/* Countdown */
+.countdown-box {
+  display: inline-block;
+  background: rgba(13,10,7,0.7); border: 1px solid rgba(201,168,76,0.2);
+  backdrop-filter: blur(16px); border-radius: 8px; padding: 1.4rem 2.2rem;
+  box-shadow: 0 0 60px rgba(201,168,76,0.08), inset 0 1px 0 rgba(201,168,76,0.1);
+}
+.cb-label {
+  display: block; text-align: center;
+  font-family: 'Cinzel', serif; color: rgba(201,168,76,0.5);
+  font-size: 0.65rem; font-weight: 600; letter-spacing: 3px;
+  text-transform: uppercase; margin-bottom: 1rem;
+}
+.cb-timer {
+  display: flex; flex-direction: row; align-items: center;
+  gap: 0.8rem; justify-content: center;
+}
+.cb-unit  { display: flex; flex-direction: column; align-items: center; min-width: 58px; }
+.cb-num {
+  font-family: 'Cinzel', serif; font-size: 2.2rem; font-weight: 700;
+  color: var(--gold-lt); line-height: 1; text-shadow: 0 0 20px rgba(201,168,76,0.4);
+}
+.cb-tag {
+  font-family: 'DM Sans', sans-serif; font-size: 0.55rem;
+  color: rgba(200,175,130,0.35); margin-top: 4px; letter-spacing: 2px;
+}
+.cb-sep {
+  width: 1px; height: 40px; flex-shrink: 0;
+  background: linear-gradient(180deg, transparent, rgba(201,168,76,0.3), transparent);
 }
 
 .hero-scroll-hint {
-  position: absolute;
-  bottom: 30px;
-  font-size: 1rem;
-  opacity: 0.7;
-  animation: bounce 2s infinite;
+  position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 0.5rem; z-index: 4;
 }
-
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+.scroll-text { font-size: 0.65rem; letter-spacing: 3px; text-transform: uppercase; color: rgba(200,175,130,0.3); }
+.scroll-arrow-wrap {
+  width: 1px; height: 50px;
+  background: linear-gradient(180deg, rgba(201,168,76,0.3), transparent);
+  animation: scrollpulse 2s ease-in-out infinite;
 }
+@keyframes scrollpulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
 
-/* Filtros Glassmorphism Premium */
-.filters-container {
-  display: flex;
-  justify-content: center;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-  padding: 4rem 2rem;
-  z-index: 3;
-  position: relative;
+.hero-deco-left, .hero-deco-right {
+  position: absolute; top: 0; bottom: 0; width: 120px; pointer-events: none; z-index: 3;
 }
+.hero-deco-left  { left: 0;  background: linear-gradient(90deg,  rgba(0,0,0,0.6), transparent); }
+.hero-deco-right { right: 0; background: linear-gradient(270deg, rgba(0,0,0,0.6), transparent); }
 
-.filter-tab {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 215, 0, 0.2);
-  color: #fff;
-  padding: 1rem 2rem;
-  border-radius: 50px;
+/* ══ FILTROS ══ */
+.filters-wrap {
+  position: sticky; top: 90px; z-index: 10;
+  padding: 1.1rem 2.5rem;
+  background: rgba(10,8,5,0.88); backdrop-filter: blur(20px) saturate(160%);
+  border-bottom: 1px solid rgba(201,168,76,0.1);
+}
+.filters-wrap::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.2), transparent);
+}
+.filters {
+  max-width: 1280px; margin: 0 auto;
+  display: flex; flex-direction: row; flex-wrap: wrap;
+  justify-content: center; gap: 0.6rem;
+}
+.ftab {
+  display: flex; flex-direction: row; align-items: center; gap: 0.55rem;
+  background: rgba(201,168,76,0.04); border: 1px solid rgba(201,168,76,0.12);
+  color: rgba(200,175,130,0.6); padding: 0.55rem 1.3rem; border-radius: 4px;
+  cursor: pointer; font-weight: 500; font-size: 0.85rem; font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.5px; transition: all 0.25s ease; white-space: nowrap;
+}
+.ftab:hover {
+  color: var(--gold-lt); background: rgba(201,168,76,0.1);
+  border-color: rgba(201,168,76,0.3); box-shadow: 0 0 15px rgba(201,168,76,0.08);
+}
+.ftab-active {
+  background: linear-gradient(135deg, rgba(201,168,76,0.18), rgba(232,123,43,0.12)) !important;
+  color: var(--gold-lt) !important; border-color: rgba(201,168,76,0.45) !important;
+  box-shadow: 0 0 20px rgba(201,168,76,0.12), inset 0 1px 0 rgba(201,168,76,0.15) !important;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+.ftab-icon  { font-size: 0.9rem; }
+.ftab-label { font-family: 'Cinzel', serif; font-size: 0.78rem; letter-spacing: 1px; }
+.ftab-badge {
+  background: rgba(192,57,43,0.85); color: rgba(255,220,200,0.95);
+  font-size: 0.62rem; padding: 0.18rem 0.5rem; border-radius: 3px; font-weight: 700;
 }
 
-.filter-tab:hover {
-  transform: translateY(-8px) scale(1.05);
-  background: rgba(255, 215, 0, 0.15);
-  border-color: #FFD700;
-  box-shadow: 0 20px 40px rgba(255, 215, 0, 0.2);
+/* ══ GRID ══ */
+.grid-wrap { max-width: 1400px; margin: 0 auto; padding: 3.5rem 2.5rem 6rem; }
+
+.section-header { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 3rem; }
+.sh-line {
+  flex: 1; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.2), rgba(201,168,76,0.08));
+}
+.sh-line:first-child { background: linear-gradient(270deg, transparent, rgba(201,168,76,0.2), rgba(201,168,76,0.08)); }
+.sh-text {
+  font-family: 'Cinzel', serif; font-size: 0.72rem; letter-spacing: 3px;
+  text-transform: uppercase; color: rgba(201,168,76,0.4); white-space: nowrap; font-weight: 600;
 }
 
-.filter-tab.active {
-  background: linear-gradient(135deg, #FFD700, #FFA500);
-  color: #000;
-  font-weight: 700;
-  box-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
-  transform: translateY(-4px);
-}
+.promo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.8rem; }
 
-.tab-badge {
-  background: #FF4500;
-  color: white;
-  font-size: 0.75rem;
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
-  font-weight: bold;
-}
-
-/* Tarjetas Premium */
-.promotions-grid {
-  max-width: 1500px;
-  margin: 0 auto;
-  padding: 2rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-  gap: 2.5rem;
-  z-index: 2;
+/* Cards */
+.pcard {
+  background: linear-gradient(145deg, rgba(28,22,14,0.98) 0%, rgba(19,14,9,0.98) 100%);
+  border-radius: 8px; overflow: hidden; border: 1px solid rgba(201,168,76,0.12);
   position: relative;
+  transition: transform 0.4s cubic-bezier(0.23,1,0.32,1), box-shadow 0.4s ease, border-color 0.4s ease;
+  animation: card-rise 0.55s ease both;
+}
+@keyframes card-rise { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+.ad-0{animation-delay:.06s} .ad-1{animation-delay:.14s} .ad-2{animation-delay:.22s}
+.ad-3{animation-delay:.30s} .ad-4{animation-delay:.38s} .ad-5{animation-delay:.46s}
+.pcard:hover { transform: translateY(-10px); }
+
+.pcard-accent-bar { position: absolute; top: 0; left: 0; right: 0; height: 2px; z-index: 5; }
+.pcard-vip     .pcard-accent-bar { background: linear-gradient(90deg, var(--gold-dk), var(--gold-lt), var(--gold-dk)); }
+.pcard-premium .pcard-accent-bar { background: linear-gradient(90deg, #6D28D9, #A78BFA, #6D28D9); }
+.pcard-limited .pcard-accent-bar { background: linear-gradient(90deg, #B45309, var(--amber), #B45309); }
+
+.pcard-vip     { border-color: rgba(201,168,76,0.2); }
+.pcard-vip:hover     { border-color: rgba(201,168,76,0.45); box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(201,168,76,0.1); }
+.pcard-premium { border-color: rgba(139,92,246,0.2); }
+.pcard-premium:hover { border-color: rgba(139,92,246,0.4); box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(139,92,246,0.1); }
+.pcard-limited { border-color: rgba(232,123,43,0.2); }
+.pcard-limited:hover { border-color: rgba(232,123,43,0.45); box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(232,123,43,0.12); }
+
+.pcard-ribbon { position: absolute; top: 22px; right: -36px; z-index: 10; transform: rotate(45deg); }
+.pcard-ribbon span {
+  display: block; background: linear-gradient(135deg, var(--gold-dk), var(--gold));
+  color: rgba(13,10,7,0.95); font-size: 0.6rem; font-weight: 800;
+  letter-spacing: 0.5px; padding: 5px 50px;
+  font-family: 'Cinzel', serif; text-transform: uppercase; box-shadow: 0 3px 12px rgba(0,0,0,0.5);
 }
 
-.promo-card {
-  background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
-  border-radius: 24px;
-  overflow: hidden;
-  position: relative;
-  transition: all 0.5s ease;
-  border: 1px solid rgba(255, 215, 0, 0.1);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+.pcard-img-wrap { position: relative; height: 240px; overflow: hidden; }
+.pcard-img { width: 100%; height: 100%; }
+.pcard-img img {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: transform 0.8s cubic-bezier(0.23,1,0.32,1);
+  filter: saturate(0.9) brightness(0.92);
+}
+.pcard:hover .pcard-img img { transform: scale(1.07); filter: saturate(1.05) brightness(1); }
+.pcard-img-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, rgba(13,10,7,0.1) 0%, rgba(13,10,7,0.3) 60%, rgba(13,10,7,0.92) 100%);
+}
+.pcard-img-gradient {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 80% 40% at 50% 120%, rgba(201,168,76,0.06) 0%, transparent 60%);
+}
+.pcard-badges-row {
+  position: absolute; bottom: 12px; left: 12px; right: 12px;
+  display: flex; justify-content: space-between; align-items: flex-end; z-index: 3;
+}
+.pcard-timer {
+  display: flex; align-items: center; gap: 0.4rem;
+  background: rgba(10,7,4,0.88); backdrop-filter: blur(8px);
+  border: 1px solid rgba(201,168,76,0.15);
+  color: rgba(200,175,130,0.75); font-size: 0.72rem; font-weight: 500;
+  padding: 0.3rem 0.75rem; border-radius: 3px;
+}
+.timer-dot {
+  width: 5px; height: 5px; border-radius: 50%; background: #EF4444;
+  box-shadow: 0 0 6px rgba(239,68,68,0.7); animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+.pcard-discount-chip {
+  background: linear-gradient(135deg, rgba(232,123,43,0.9), rgba(201,100,30,0.9));
+  color: rgba(255,240,220,0.95); font-size: 0.72rem; font-weight: 800;
+  padding: 0.28rem 0.7rem; border-radius: 3px; letter-spacing: 0.5px;
+  font-family: 'Cinzel', serif; box-shadow: 0 2px 10px rgba(232,123,43,0.4);
 }
 
-.promo-card:hover {
-  transform: translateY(-20px);
-  border-color: #FFD700;
-  box-shadow: 0 30px 80px rgba(255, 215, 0, 0.25);
+.pcard-body { padding: 1.4rem 1.5rem 1.5rem; }
+.pcard-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.8rem; }
+.ptag {
+  font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+  color: rgba(200,175,130,0.4); border: 1px solid rgba(201,168,76,0.12);
+  padding: 0.18rem 0.6rem; border-radius: 2px; font-family: 'DM Sans', sans-serif;
+}
+.pcard-title {
+  font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 700;
+  line-height: 1.25; color: var(--gold-lt); margin-bottom: 0.55rem;
+}
+.pcard-desc { font-size: 0.83rem; color: rgba(200,175,130,0.45); line-height: 1.65; font-weight: 300; }
+.pcard-divider { height: 1px; margin: 1.1rem 0; background: linear-gradient(90deg, transparent, rgba(201,168,76,0.15), transparent); }
+.pcard-price-row { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; }
+.pcard-price { display: flex; flex-direction: column; gap: 0.15rem; }
+.pp-old { font-size: 0.8rem; color: rgba(200,175,130,0.28); text-decoration: line-through; }
+.pp-new {
+  font-family: 'Cinzel', serif; font-size: 1.65rem; font-weight: 700;
+  color: var(--gold-lt); line-height: 1; text-shadow: 0 0 20px rgba(201,168,76,0.25);
+}
+.pcard-btn {
+  display: flex; align-items: center; gap: 0.5rem;
+  background: linear-gradient(135deg, rgba(201,168,76,0.18) 0%, rgba(232,123,43,0.14) 100%);
+  border: 1px solid rgba(201,168,76,0.3); color: var(--gold-lt);
+  border-radius: 4px; padding: 0.7rem 1.2rem;
+  font-family: 'Cinzel', sans-serif; font-size: 0.75rem; font-weight: 600;
+  letter-spacing: 0.5px; cursor: pointer; transition: all 0.25s ease; white-space: nowrap;
+}
+.pcard-btn:hover {
+  background: linear-gradient(135deg, rgba(201,168,76,0.3) 0%, rgba(232,123,43,0.22) 100%);
+  border-color: rgba(201,168,76,0.55);
+  box-shadow: 0 0 20px rgba(201,168,76,0.18); transform: translateY(-1px);
+}
+.btn-ico { font-size: 0.9rem; }
+.pcard-glow { position: absolute; inset: 0; pointer-events: none; opacity: 0; border-radius: 8px; transition: opacity 0.4s; }
+.pcard-vip     .pcard-glow { box-shadow: inset 0 0 40px rgba(201,168,76,0.06); }
+.pcard-premium .pcard-glow { box-shadow: inset 0 0 40px rgba(139,92,246,0.08); }
+.pcard-limited .pcard-glow { box-shadow: inset 0 0 40px rgba(232,123,43,0.08); }
+.pcard:hover   .pcard-glow { opacity: 1; }
+
+/* Empty */
+.empty { text-align: center; padding: 6rem 2rem; }
+.empty-ico { font-size: 3rem; margin-bottom: 1.2rem; filter: grayscale(0.4); }
+.empty h3  { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: var(--gold-lt); margin-bottom: 0.5rem; }
+.empty p   { color: rgba(200,175,130,0.4); margin-bottom: 1.8rem; font-size: 0.9rem; }
+.empty-btn {
+  background: transparent; border: 1px solid rgba(201,168,76,0.3); color: var(--gold);
+  padding: 0.7rem 2rem; border-radius: 4px; font-weight: 600; cursor: pointer;
+  font-family: 'Cinzel', serif; font-size: 0.8rem; letter-spacing: 1.5px; text-transform: uppercase; transition: all 0.25s;
+}
+.empty-btn:hover { background: rgba(201,168,76,0.1); border-color: rgba(201,168,76,0.5); }
+
+/* ══ FOOTER ══ */
+.footer {
+  background: rgba(7,5,3,0.98); border-top: 1px solid rgba(201,168,76,0.1);
+  padding: 3rem 2.5rem 1.5rem; position: relative; overflow: hidden;
+}
+.footer-top-border {
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-dk), var(--gold), var(--amber), var(--gold), var(--gold-dk), transparent);
+  background-size: 200%; animation: shine 4s linear infinite;
+}
+@keyframes shine { 0%{background-position:0%} 100%{background-position:200%} }
+.footer-inner {
+  max-width: 1280px; margin: 0 auto;
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2rem; margin-bottom: 2.5rem;
+}
+.footer-brand { display: flex; align-items: flex-start; gap: 1rem; }
+.fb-emblem { font-size: 1.8rem; line-height: 1; }
+.fb-name {
+  display: block; font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 700; letter-spacing: 3px;
+  background: linear-gradient(135deg, #E8C97A, #C9A84C);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.3rem;
+}
+.fb-tagline { color: rgba(200,175,130,0.3); font-size: 0.8rem; font-weight: 300; letter-spacing: 1px; }
+.footer-links { display: flex; flex-direction: column; gap: 0.55rem; }
+.flink { color: rgba(200,175,130,0.4); text-decoration: none; font-size: 0.85rem; font-weight: 300; transition: color 0.2s; }
+.flink:hover { color: var(--gold); }
+.footer-copy {
+  text-align: center; color: rgba(200,175,130,0.18); font-size: 0.75rem;
+  padding-top: 1.5rem; border-top: 1px solid rgba(201,168,76,0.06); letter-spacing: 0.5px;
 }
 
-.promo-card.vip { border-color: rgba(255, 215, 0, 0.4); }
-.promo-card.premium { border-color: rgba(138, 43, 226, 0.6); }
-.promo-card.limited { border-color: rgba(255, 69, 0, 0.6); }
-
-.promo-badge {
-  position: absolute;
-  top: 16px;
-  right: -45px;
-  background: linear-gradient(45deg, #FFD700, #FFA500);
-  color: #000;
-  padding: 10px 60px;
-  font-weight: 800;
-  font-size: 0.9rem;
-  transform: rotate(45deg);
-  z-index: 10;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+/* ══ MODAL ══ */
+.modal-bg {
+  position: fixed; inset: 0; z-index: 2000;
+  background: rgba(5,3,1,0.9); backdrop-filter: blur(12px);
+  display: flex; align-items: center; justify-content: center; padding: 2rem;
 }
-
-.promo-image {
-  position: relative;
-  height: 280px;
-  overflow: hidden;
+.modal {
+  background: linear-gradient(145deg, #1C1610, #130F0A);
+  border: 1px solid rgba(201,168,76,0.2); border-radius: 8px;
+  padding: 2.8rem; max-width: 460px; width: 100%; position: relative;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.9);
 }
-
-.promo-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.8s ease;
+.modal::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), var(--amber), var(--gold), transparent);
+  border-radius: 8px 8px 0 0;
 }
-
-.promo-card:hover .promo-image img {
-  transform: scale(1.12);
+.modal-x {
+  position: absolute; top: 1.2rem; right: 1.2rem;
+  background: none; border: 1px solid rgba(201,168,76,0.1); color: rgba(200,175,130,0.3);
+  font-size: 0.95rem; cursor: pointer; width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s;
 }
-
-.image-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.9), transparent 30%);
+.modal-x:hover { color: var(--gold); border-color: rgba(201,168,76,0.3); }
+.modal-icon  { font-size: 2.2rem; margin-bottom: 1rem; }
+.modal-title { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 700; color: var(--gold-lt); margin-bottom: 1rem; }
+.modal-text  { color: rgba(200,175,130,0.5); line-height: 1.85; font-size: 0.88rem; margin-bottom: 2rem; font-weight: 300; }
+.modal-ok {
+  background: transparent; border: 1px solid rgba(201,168,76,0.35); color: var(--gold);
+  padding: 0.75rem 2.5rem; border-radius: 4px; font-weight: 600; cursor: pointer;
+  font-family: 'Cinzel', serif; font-size: 0.78rem; letter-spacing: 2px; text-transform: uppercase; transition: all 0.25s;
 }
+.modal-ok:hover { background: rgba(201,168,76,0.12); border-color: rgba(201,168,76,0.55); }
 
-.shine-effect {
-  position: absolute;
-  top: -100%;
-  left: -100%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(120deg, transparent, rgba(255,215,0,0.15), transparent);
-  transition: all 0.8s;
-  pointer-events: none;
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+/* ══ RESPONSIVE ══ */
+@media (max-width: 900px) {
+  .nav-links, .nav-auth { display: none; }
+  .hamburger { display: flex; }
+  .navbar    { height: auto; }
+  .nav-inner { padding: 0.8rem 1.5rem; }
+  .filters-wrap { padding: 1rem 1.5rem; top: 60px; }
 }
-
-.promo-card:hover .shine-effect {
-  top: 100%;
-  left: 100%;
-}
-
-.promo-content {
-  padding: 2rem;
-}
-
-.promo-title {
-  font-family: 'Cormorant Garamond', serif;
-  color: #FFD700;
-  font-size: 1.8rem;
-  font-weight: 700;
-  margin-bottom: 0.8rem;
-}
-
-.promo-price {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin: 1.5rem 0;
-}
-
-.final-price {
-  color: #FFD700;
-  font-size: 2.2rem;
-  font-weight: 800;
-  font-family: 'Inter', sans-serif;
-}
-
-.discount-tag {
-  background: linear-gradient(135deg, #FF4500, #FF6B6B);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 30px;
-  font-weight: bold;
-  font-size: 0.9rem;
-}
-
-.buy-btn {
-  width: 100%;
-  background: linear-gradient(135deg, #FFD700, #FFA500);
-  color: #000;
-  border: none;
-  padding: 1.1rem;
-  border-radius: 50px;
-  font-size: 1.1rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.8rem;
-}
-
-.buy-btn:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 15px 30px rgba(255, 215, 0, 0.4);
-}
-
-.promo-timer {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(90deg, #FF4500, #FF1B1B);
-  color: white;
-  text-align: center;
-  padding: 1rem;
-  font-weight: bold;
-  font-size: 1rem;
-  letter-spacing: 1px;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 8rem 2rem;
-  color: rgba(255,255,255,0.7);
-}
-
-.empty-icon {
-  font-size: 5rem;
-  margin-bottom: 1rem;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .promotions-grid { 
-    grid-template-columns: 1fr;
-    padding: 0 1rem;
-  }
-  .filters-container { 
-    padding: 2rem 1rem;
-    gap: 1rem;
-  }
-  .filter-tab {
-    padding: 0.9rem 1.5rem;
-    font-size: 0.95rem;
-  }
+@media (max-width: 600px) {
+  .promo-grid { grid-template-columns: 1fr; }
+  .grid-wrap  { padding: 2rem 1.2rem 4rem; }
+  .cb-timer   { gap: 0.5rem; }
+  .cb-num     { font-size: 1.8rem; }
+  .footer-inner { flex-direction: column; gap: 1.5rem; }
+  .footer { padding: 2.5rem 1.5rem 1.5rem; }
+  .hero-content { padding: 0 1.5rem; }
 }
 </style>
