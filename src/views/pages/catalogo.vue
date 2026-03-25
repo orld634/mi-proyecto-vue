@@ -1,5 +1,5 @@
 <template>
-  <div class="catalog-page">
+  <div class="catalog-page" ref="catalogPage">
     <!-- Fondo animado -->
     <div class="background-overlay"></div>
     
@@ -493,6 +493,7 @@ const itemsPerPage = ref(9);
 // ==== Referencias DOM ====
 const filtersSection = ref(null);
 const productsSection = ref(null);
+const catalogPage = ref(null);
 
 // ==================== ESTRUCTURA: CATEGORÍAS CON PRODUCTOS ====================
 const categoriesWithProducts = computed(() => {
@@ -981,7 +982,13 @@ function closeProductDetail() {
   selectedProduct.value = null;
 }
 
-function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function scrollToTop() {
+  if (catalogPage.value) {
+    catalogPage.value.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
 
 // ==================== WATCHERS: ACTUALIZACIONES EN TIEMPO REAL ====================
 watch(
@@ -1025,14 +1032,23 @@ onMounted(async () => {
   console.log('✅ Productos en store:', store.products);
   console.log('✅ Carrito cargado:', cart.value);
   
-  window.addEventListener('scroll', () => {
-    showScrollToTop.value = window.scrollY > 500;
-  });
+  // El scroll real del contenido vive en este contenedor (no en window).
+  await nextTick();
+  if (catalogPage.value) {
+    catalogPage.value.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+  }
 });
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', () => {});
+  catalogPage.value?.removeEventListener('scroll', handleScroll);
 });
+
+const handleScroll = () => {
+  const el = catalogPage.value;
+  const top = el ? el.scrollTop : window.scrollY;
+  showScrollToTop.value = top > 400;   // aparece después de bajar 400px
+};
 
 </script>
 
@@ -1050,6 +1066,7 @@ onUnmounted(() => {
 
 /* ══ PÁGINA BASE ══ */
 .catalog-page {
+  height: 100vh;
   min-height: 100vh;
   background:
     repeating-linear-gradient(90deg,  transparent 0px, transparent 119px, rgba(201,168,76,0.025) 120px),
@@ -1061,7 +1078,26 @@ onUnmounted(() => {
   font-family: 'DM Sans', sans-serif;
   overflow-x: hidden;
   overflow-y: auto;
-  position: relative;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable both-edges;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 215, 0, 0.45) rgba(201,168,76,0.06);
+}
+
+.catalog-page::-webkit-scrollbar {
+  width: 10px;
+}
+.catalog-page::-webkit-scrollbar-track {
+  background: rgba(201,168,76,0.06);
+}
+.catalog-page::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--gold-dk) 0%, var(--amber) 55%, var(--gold-lt) 100%);
+  border-radius: 999px;
+  border: 2px solid rgba(0,0,0,0);
+  background-clip: padding-box;
+}
+.catalog-page::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--gold-lt) 0%, var(--amber) 55%, var(--gold-dk) 100%);
 }
 
 .background-overlay {
@@ -1876,4 +1912,6 @@ html { scroll-behavior: smooth; scroll-padding-top: 100px; }
   .cart-toggle    { width: 52px; height: 52px; }
   .scroll-to-top  { bottom: 3rem; left: 0.5rem; width: 40px; height: 40px; }
 }
+
+
 </style>
