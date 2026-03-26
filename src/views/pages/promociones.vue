@@ -15,9 +15,9 @@
           <router-link to="/" class="nlink">
             <span class="nlink-icon">🏠</span><span>Inicio</span>
           </router-link>
-          <router-link to="/catalogo" class="nlink">
+          <a href="#" class="nlink" @click.prevent="handleCatalogAccess">
             <span class="nlink-icon">📦</span><span>Catálogo</span>
-          </router-link>
+          </a>
           <router-link to="/promociones" class="nlink nlink-active">
             <span class="nlink-icon">🎯</span><span>Promociones</span>
           </router-link>
@@ -55,7 +55,7 @@
       <transition name="mob-drop">
         <div class="mob-menu" v-if="mobileOpen">
           <router-link to="/"            class="mob-item" @click="mobileOpen=false">🏠 Inicio</router-link>
-          <router-link to="/catalogo"    class="mob-item" @click="mobileOpen=false">📦 Catálogo</router-link>
+          <a href="#" class="mob-item" @click.prevent="handleCatalogAccess(true)">📦 Catálogo</a>
           <router-link to="/promociones" class="mob-item mob-active" @click="mobileOpen=false">🎯 Promociones</router-link>
           <a href="#" class="mob-item" @click.prevent="showTerms=true; mobileOpen=false">📜 Política</a>
           <a href="#contacto" class="mob-item" @click="mobileOpen=false">📞 Contáctanos</a>
@@ -247,6 +247,16 @@
       </div>
     </transition>
 
+    <Transition name="notice-fade">
+      <div v-if="showCatalogAccessNotice" class="catalog-access-notice" role="status" aria-live="polite">
+        <span class="notice-icon">🔒</span>
+        <div class="notice-content">
+          <strong>Acceso restringido</strong>
+          <p>Debes iniciar sesion para acceder al catalogo.</p>
+        </div>
+      </div>
+    </Transition>
+
   </div>
 </template>
 
@@ -261,7 +271,9 @@ const userName        = ref('')
 const isScrolled      = ref(false)
 const mobileOpen      = ref(false)
 const showTerms       = ref(false)
+const showCatalogAccessNotice = ref(false)
 const activeTab       = ref('all')
+let catalogNoticeTimer = null
 
 const tabs = [
   { id: 'all',     label: 'Todas',           icon: '🎁' },
@@ -342,6 +354,26 @@ function logout() {
   router.push('/login')
 }
 
+function handleCatalogAccess(fromMobile = false) {
+  if (fromMobile) {
+    mobileOpen.value = false
+  }
+
+  if (isAuthenticated.value) {
+    router.push('/catalogo')
+    return
+  }
+
+  showCatalogAccessNotice.value = true
+  if (catalogNoticeTimer) {
+    clearTimeout(catalogNoticeTimer)
+  }
+  catalogNoticeTimer = setTimeout(() => {
+    showCatalogAccessNotice.value = false
+    catalogNoticeTimer = null
+  }, 2600)
+}
+
 const countdown    = ref({ days: 0, hours: 0, minutes: 0, seconds: 0 })
 const hasCountdown = ref(true)
 let timerInterval  = null
@@ -374,6 +406,10 @@ onMounted(() => {
   onUnmounted(() => {
     clearInterval(timerInterval)
     window.removeEventListener('scroll', onScroll)
+    if (catalogNoticeTimer) {
+      clearTimeout(catalogNoticeTimer)
+      catalogNoticeTimer = null
+    }
   })
 })
 </script>
@@ -562,66 +598,73 @@ onMounted(() => {
 .hero-content { position: relative; z-index: 4; padding: 0 2rem; max-width: 860px; }
 
 .hero-eyebrow {
-  display: flex; align-items: center; justify-content: center; gap: 1.2rem; margin-bottom: 2rem;
+  display: flex; align-items: center; justify-content: center; gap: 1rem;
+  margin-bottom: 1.35rem;
+  flex-wrap: wrap;
 }
 .eyebrow-line {
-  display: block; width: 60px; height: 1px;
+  display: block; width: 72px; height: 1px;
   background: linear-gradient(90deg, transparent, var(--gold));
 }
 .eyebrow-line-r { background: linear-gradient(270deg, transparent, var(--gold)); }
 .eyebrow-text {
-  font-family: 'Cinzel', serif; font-size: 0.72rem; letter-spacing: 5px;
-  text-transform: uppercase; color: var(--gold); font-weight: 600;
+  font-family: 'Cinzel', serif; font-size: 0.74rem; letter-spacing: 4px;
+  text-transform: uppercase; color: rgba(232,201,122,0.9); font-weight: 700;
 }
 
-.hero-title { display: flex; flex-direction: column; gap: 0.2rem; margin-bottom: 1.2rem; }
+.hero-title { display: flex; flex-direction: column; gap: 0.15rem; margin-bottom: 0.85rem; }
 .ht-main {
   font-family: 'Cinzel', serif;
-  font-size: clamp(3.5rem, 9vw, 7.5rem); font-weight: 700; line-height: 0.9;
-  letter-spacing: 6px; text-transform: uppercase;
+  font-size: clamp(3rem, 8.2vw, 6.4rem); font-weight: 700; line-height: 0.94;
+  letter-spacing: 4px; text-transform: uppercase;
   background: linear-gradient(160deg, #E8C97A 0%, #C9A84C 40%, #E87B2B 80%, #C9A84C 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   filter: drop-shadow(0 0 30px rgba(201,168,76,0.35));
 }
 .ht-accent {
   font-family: 'Playfair Display', serif;
-  font-size: clamp(1.5rem, 4vw, 3rem); font-weight: 400; font-style: italic;
-  color: rgba(220,190,140,0.55); letter-spacing: 10px; text-transform: uppercase;
+  font-size: clamp(1.2rem, 3vw, 2.4rem); font-weight: 500; font-style: italic;
+  color: rgba(224,196,150,0.72); letter-spacing: 6px; text-transform: uppercase;
 }
 
 .hero-desc {
-  font-size: 1rem; color: rgba(200,175,130,0.55);
-  margin: 1.2rem auto 2.5rem; max-width: 420px; line-height: 1.7; font-weight: 300;
+  font-size: 0.96rem; color: rgba(216,188,142,0.72);
+  margin: 0.95rem auto 1.7rem;
+  max-width: 520px;
+  line-height: 1.6;
+  font-weight: 400;
 }
 
 /* Countdown */
 .countdown-box {
   display: inline-block;
   background: rgba(13,10,7,0.7); border: 1px solid rgba(201,168,76,0.2);
-  backdrop-filter: blur(16px); border-radius: 8px; padding: 1.4rem 2.2rem;
+  backdrop-filter: blur(16px);
+  border-radius: 10px;
+  padding: 1.05rem 1.55rem 1.15rem;
   box-shadow: 0 0 60px rgba(201,168,76,0.08), inset 0 1px 0 rgba(201,168,76,0.1);
 }
 .cb-label {
   display: block; text-align: center;
   font-family: 'Cinzel', serif; color: rgba(201,168,76,0.5);
-  font-size: 0.65rem; font-weight: 600; letter-spacing: 3px;
-  text-transform: uppercase; margin-bottom: 1rem;
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 2.5px;
+  text-transform: uppercase; margin-bottom: 0.8rem;
 }
 .cb-timer {
   display: flex; flex-direction: row; align-items: center;
-  gap: 0.8rem; justify-content: center;
+  gap: 0.62rem; justify-content: center;
 }
-.cb-unit  { display: flex; flex-direction: column; align-items: center; min-width: 58px; }
+.cb-unit  { display: flex; flex-direction: column; align-items: center; min-width: 50px; }
 .cb-num {
-  font-family: 'Cinzel', serif; font-size: 2.2rem; font-weight: 700;
+  font-family: 'Cinzel', serif; font-size: 1.9rem; font-weight: 700;
   color: var(--gold-lt); line-height: 1; text-shadow: 0 0 20px rgba(201,168,76,0.4);
 }
 .cb-tag {
-  font-family: 'DM Sans', sans-serif; font-size: 0.55rem;
-  color: rgba(200,175,130,0.35); margin-top: 4px; letter-spacing: 2px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.52rem;
+  color: rgba(208,181,136,0.5); margin-top: 5px; letter-spacing: 1.6px;
 }
 .cb-sep {
-  width: 1px; height: 40px; flex-shrink: 0;
+  width: 1px; height: 34px; flex-shrink: 0;
   background: linear-gradient(180deg, transparent, rgba(201,168,76,0.3), transparent);
 }
 
@@ -891,6 +934,56 @@ onMounted(() => {
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 
+/* Aviso de acceso a catalogo */
+.catalog-access-notice {
+  position: fixed;
+  top: 105px;
+  right: 1.2rem;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 290px;
+  max-width: 360px;
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(201,168,76,0.35);
+  background: linear-gradient(145deg, rgba(28,22,14,0.98), rgba(19,14,9,0.98));
+  box-shadow: 0 16px 35px rgba(0,0,0,0.55), 0 0 24px rgba(201,168,76,0.1);
+}
+.notice-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(201,168,76,0.1);
+  border: 1px solid rgba(201,168,76,0.24);
+}
+.notice-content strong {
+  display: block;
+  color: var(--gold-lt);
+  font-family: 'Cinzel', serif;
+  font-size: 0.84rem;
+  letter-spacing: 0.6px;
+  margin-bottom: 0.2rem;
+}
+.notice-content p {
+  margin: 0;
+  color: rgba(220,190,140,0.75);
+  font-size: 0.82rem;
+}
+.notice-fade-enter-active,
+.notice-fade-leave-active {
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+.notice-fade-enter-from,
+.notice-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
 /* ══ RESPONSIVE ══ */
 @media (max-width: 900px) {
   .nav-links, .nav-auth { display: none; }
@@ -902,10 +995,27 @@ onMounted(() => {
 @media (max-width: 600px) {
   .promo-grid { grid-template-columns: 1fr; }
   .grid-wrap  { padding: 2rem 1.2rem 4rem; }
-  .cb-timer   { gap: 0.5rem; }
-  .cb-num     { font-size: 1.8rem; }
+  .hero-eyebrow { margin-bottom: 1rem; gap: 0.6rem; }
+  .eyebrow-line { width: 42px; }
+  .eyebrow-text { font-size: 0.64rem; letter-spacing: 2.6px; }
+  .ht-main      { letter-spacing: 2px; }
+  .ht-accent    { letter-spacing: 3px; }
+  .hero-desc    { margin: 0.7rem auto 1.2rem; max-width: 90%; font-size: 0.88rem; }
+  .countdown-box { width: min(94vw, 350px); padding: 0.9rem 0.8rem 1rem; }
+  .cb-timer   { gap: 0.32rem; }
+  .cb-unit    { min-width: 44px; }
+  .cb-num     { font-size: 1.5rem; }
+  .cb-tag     { font-size: 0.48rem; letter-spacing: 1px; }
+  .cb-sep     { height: 28px; }
   .footer-inner { flex-direction: column; gap: 1.5rem; }
   .footer { padding: 2.5rem 1.5rem 1.5rem; }
   .hero-content { padding: 0 1.5rem; }
+  .catalog-access-notice {
+    top: 95px;
+    right: 0.7rem;
+    left: 0.7rem;
+    min-width: auto;
+    max-width: none;
+  }
 }
 </style>

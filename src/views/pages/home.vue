@@ -14,10 +14,10 @@
         <h1 class="brand-title">Brindis Express</h1>
         <div class="nav-section">
           <div class="nav-links">
-            <router-link to="/catalogo" class="nav-link">
+            <a href="#" class="nav-link" @click.prevent="handleCatalogAccess">
               <span class="nav-icon">📋</span>
               Catálogo
-            </router-link>
+            </a>
             <router-link to="/promociones" class="nav-link">
               <span class="nav-icon">🎯</span>
               Promociones
@@ -54,7 +54,7 @@
     </nav>
 
     <!-- Main content (hidden when terms are shown) -->
-    <div v-if="!showTerms" class="main-content">
+    <div v-show="!showTerms" class="main-content">
       <!-- Carrusel Hero -->
       <div class="hero-carousel">
         <div class="carousel-container">
@@ -180,16 +180,17 @@
     </div>
 
     <!-- Sección de Términos y Condiciones (shown only when toggled) -->
-    <section v-if="showTerms" id="terminos" class="terms-section">
-      <button class="close-modal-btn" @click="toggleTerms">×</button>
-      <Transition name="terms-header" appear>
-        <div class="section-header">
-          <h2 class="section-title">⚖️ Términos y Condiciones</h2>
-          <div class="title-underline"></div>
-        </div>
-      </Transition>
-      
-      <TransitionGroup name="terms-card" tag="div" class="terms-grid">
+    <div v-if="showTerms" class="terms-overlay" @click.self="toggleTerms">
+      <section id="terminos" class="terms-section" @click.stop>
+        <button class="close-modal-btn" @click="toggleTerms">×</button>
+        <Transition name="terms-header" appear>
+          <div class="section-header">
+            <h2 class="section-title">⚖️ Términos y Condiciones</h2>
+            <div class="title-underline"></div>
+          </div>
+        </Transition>
+        
+        <TransitionGroup name="terms-card" tag="div" class="terms-grid">
         <!-- 1. Aceptación de Términos -->
         <div class="terms-card" :key="1">
           <h3 class="terms-subtitle">1. Aceptación de Términos</h3>
@@ -329,8 +330,19 @@
             </button>
           </div>
         </div>
-      </TransitionGroup>
-    </section>
+        </TransitionGroup>
+      </section>
+    </div>
+
+    <Transition name="notice-fade">
+      <div v-if="showCatalogAccessNotice" class="catalog-access-notice" role="status" aria-live="polite">
+        <span class="notice-icon">🔒</span>
+        <div class="notice-content">
+          <strong>Acceso restringido</strong>
+          <p>Debes iniciar sesion para acceder al catalogo.</p>
+        </div>
+      </div>
+    </Transition>
 
     <!-- Footer -->
     <footer class="footer" id="contactanos">
@@ -423,6 +435,8 @@ const usernombre = ref('')
 
 // Estado del modal
 const showTerms = ref(false)
+const showCatalogAccessNotice = ref(false)
+let catalogNoticeTimer = null
 
 // Computed para verificar si es página de auth
 const isAuthPage = computed(() => {
@@ -483,6 +497,22 @@ function addToCart(producto) {
   alert(`${producto.titulo} agregado al carrito!`)
 }
 
+function handleCatalogAccess() {
+  if (isAuthenticated.value) {
+    router.push('/catalogo')
+    return
+  }
+
+  showCatalogAccessNotice.value = true
+  if (catalogNoticeTimer) {
+    clearTimeout(catalogNoticeTimer)
+  }
+  catalogNoticeTimer = setTimeout(() => {
+    showCatalogAccessNotice.value = false
+    catalogNoticeTimer = null
+  }, 2600)
+}
+
 // Función para scroll a la Política de Privacidad
 const scrollToPolicy = () => {
   document.getElementById('politica')?.scrollIntoView({
@@ -522,10 +552,14 @@ watch(() => route.path, () => {
 
 watch(showTerms, (newValue) => {
   if (newValue) {
+    document.body.style.overflow = 'hidden'
     setTimeout(setupTermsObserver, 100)
-  } else if (observer) {
-    observer.disconnect()
-    observer = null
+  } else {
+    if (observer) {
+      observer.disconnect()
+      observer = null
+    }
+    document.body.style.overflow = ''
   }
 })
 
@@ -544,6 +578,11 @@ onUnmounted(() => {
   if (observer) {
     observer.disconnect()
   }
+  if (catalogNoticeTimer) {
+    clearTimeout(catalogNoticeTimer)
+    catalogNoticeTimer = null
+  }
+  document.body.style.overflow = ''
 })
 
 watch(isAuthPage, (newValue) => {
@@ -587,6 +626,39 @@ watch(isAuthPage, (newValue) => {
 }
 
 .main-content { position: relative; z-index: 10; }
+
+/* ══ SCROLLBAR THEME ══ */
+.main-layout,
+.terms-section {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201,168,76,0.65) rgba(19,14,9,0.95);
+}
+
+.main-layout::-webkit-scrollbar,
+.terms-section::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.main-layout::-webkit-scrollbar-track,
+.terms-section::-webkit-scrollbar-track {
+  background: linear-gradient(180deg, rgba(12,9,6,0.95), rgba(19,14,9,0.95));
+  border: 1px solid rgba(201,168,76,0.14);
+  border-radius: 10px;
+}
+
+.main-layout::-webkit-scrollbar-thumb,
+.terms-section::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(232,123,43,0.7), rgba(201,168,76,0.9));
+  border: 1px solid rgba(255,224,144,0.25);
+  border-radius: 10px;
+}
+
+.main-layout::-webkit-scrollbar-thumb:hover,
+.terms-section::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(246,146,70,0.85), rgba(224,191,102,0.96));
+  box-shadow: 0 0 8px rgba(201,168,76,0.25);
+}
 
 .background-overlay {
   position: fixed; inset: 0;
@@ -953,14 +1025,28 @@ watch(isAuthPage, (newValue) => {
 .catalog-icon { font-size: 1.1rem; }
 
 /* ══ TÉRMINOS ══ */
+.terms-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(5, 3, 1, 0.82);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
 .terms-section {
   position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  width: 90%; max-height: 80vh; overflow-y: auto; z-index: 1000;
+  width: min(1100px, 92vw);
+  max-height: 84vh;
+  overflow-y: auto;
+  z-index: 1001;
   background: linear-gradient(145deg, #1C1610, #130F0A);
   border: 1px solid rgba(201,168,76,0.2); border-radius: 8px;
   padding: 2.5rem; backdrop-filter: blur(25px);
   box-shadow: 0 40px 100px rgba(0,0,0,0.9), 0 0 60px rgba(201,168,76,0.05);
-  position: relative;
 }
 .terms-section::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
@@ -1095,6 +1181,56 @@ watch(isAuthPage, (newValue) => {
 .terms-card-enter-from     { opacity: 0; transform: translateY(40px); }
 .terms-card-move           { transition: all 0.55s ease-out; }
 
+/* Aviso de acceso a catalogo */
+.catalog-access-notice {
+  position: fixed;
+  top: 105px;
+  right: 1.2rem;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 290px;
+  max-width: 360px;
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(201,168,76,0.35);
+  background: linear-gradient(145deg, rgba(28,22,14,0.98), rgba(19,14,9,0.98));
+  box-shadow: 0 16px 35px rgba(0,0,0,0.55), 0 0 24px rgba(201,168,76,0.1);
+}
+.notice-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(201,168,76,0.1);
+  border: 1px solid rgba(201,168,76,0.24);
+}
+.notice-content strong {
+  display: block;
+  color: var(--gold-lt);
+  font-family: 'Cinzel', serif;
+  font-size: 0.84rem;
+  letter-spacing: 0.6px;
+  margin-bottom: 0.2rem;
+}
+.notice-content p {
+  margin: 0;
+  color: rgba(220,190,140,0.75);
+  font-size: 0.82rem;
+}
+.notice-fade-enter-active,
+.notice-fade-leave-active {
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+.notice-fade-enter-from,
+.notice-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
 /* ══ FOOTER ══ */
 .footer {
   background: rgba(7,5,3,0.98); border-top: 1px solid rgba(201,168,76,0.08);
@@ -1156,8 +1292,15 @@ watch(isAuthPage, (newValue) => {
   .products-grid  { grid-template-columns: 1fr; }
   .user-menu      { width: 100%; justify-content: center; flex-wrap: wrap; }
   .contact-grid   { grid-template-columns: 1fr; }
-  .terms-section  { padding: 2rem 1.2rem; width: 95%; }
+  .terms-section  { padding: 2rem 1.2rem; width: min(95vw, 95%); max-height: 86vh; }
   .terms-card     { padding: 1.4rem; }
+  .catalog-access-notice {
+    top: 95px;
+    right: 0.7rem;
+    left: 0.7rem;
+    min-width: auto;
+    max-width: none;
+  }
 }
 @media (max-width: 480px) {
   .navbar-content { padding: 0.8rem 1rem; }

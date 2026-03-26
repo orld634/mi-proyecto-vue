@@ -221,26 +221,47 @@
       <button @click="closePaymentModal" class="close-btn">×</button>
     </div>
     <div class="payment-content">
-      <p>Selecciona tu método de pago:</p>
+      <p class="payment-intro">Selecciona tu método de pago:</p>
       <div class="payment-options">
-        <button class="payment-option" @click="selectPaymentMethod('tarjeta')">
+        <button
+          :class="['payment-option', { active: selectedPaymentMethod === 'tarjeta' }]"
+          @click="selectPaymentMethod('tarjeta')"
+        >
           <span>💳</span> Tarjeta de Crédito/Débito
         </button>
-        <button class="payment-option" @click="selectPaymentMethod('transferencia')">
+        <button
+          :class="['payment-option', { active: selectedPaymentMethod === 'transferencia' }]"
+          @click="selectPaymentMethod('transferencia')"
+        >
           <span>🏦</span> Transferencia Bancaria
         </button>
-        <button class="payment-option" @click="selectPaymentMethod('efectivo')">
+        <button
+          :class="['payment-option', { active: selectedPaymentMethod === 'efectivo' }]"
+          @click="selectPaymentMethod('efectivo')"
+        >
           <span>💵</span> Efectivo (Contraentrega)
         </button>
       </div>
+      <p v-if="selectedPaymentMethod" class="payment-selected-info">
+        Metodo seleccionado:
+        <strong>
+          {{
+            selectedPaymentMethod === 'tarjeta'
+              ? 'Tarjeta'
+              : selectedPaymentMethod === 'transferencia'
+              ? 'Transferencia'
+              : 'Efectivo'
+          }}
+        </strong>
+      </p>
       <div class="payment-form" v-if="selectedPaymentMethod === 'tarjeta'">
         <h4>Ingresa los datos de tu tarjeta</h4>
         <form @submit.prevent="processPayment">
-          <input type="text" placeholder="Número de tarjeta" class="payment-input" required>
-          <input type="text" placeholder="Nombre del titular" class="payment-input" required>
+          <input type="text" placeholder="Número de tarjeta" class="payment-input" autocomplete="cc-number" inputmode="numeric" maxlength="19" required>
+          <input type="text" placeholder="Nombre del titular" class="payment-input" autocomplete="cc-name" required>
           <div class="expiry-cvv">
-            <input type="text" placeholder="MM/AA" class="payment-input" required>
-            <input type="text" placeholder="CVV" class="payment-input" required>
+            <input type="text" placeholder="MM/AA" class="payment-input" autocomplete="cc-exp" inputmode="numeric" maxlength="5" required>
+            <input type="text" placeholder="CVV" class="payment-input" autocomplete="cc-csc" inputmode="numeric" maxlength="4" required>
           </div>
           <button type="submit" class="confirm-payment-btn">Confirmar Pago</button>
         </form>
@@ -964,10 +985,12 @@ function closeCartModal() {
 function openPaymentOptions() {
   showCartModal.value = false;
   showPaymentModal.value = true;
+  selectedPaymentMethod.value = '';
 }
 
 function closePaymentModal() {
   showPaymentModal.value = false;
+  selectedPaymentMethod.value = '';
 }
 
 function selectPaymentMethod(method) {
@@ -1544,7 +1567,7 @@ const handleScroll = () => {
   font-family: 'Playfair Display', serif; color: var(--gold-lt);
   font-size: 1.3rem; font-weight: 700; margin: 0;
 }
-.payment-content p { color: rgba(200,175,130,0.5); margin-bottom: 1.2rem; font-size: 0.88rem; }
+.payment-intro { color: rgba(224,197,152,0.75); margin-bottom: 1.2rem; font-size: 0.92rem; }
 .payment-options { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.2rem; }
 .payment-option {
   background: rgba(201,168,76,0.04); border: 1px solid rgba(201,168,76,0.14);
@@ -1554,6 +1577,21 @@ const handleScroll = () => {
 }
 .payment-option:hover {
   background: rgba(201,168,76,0.1); border-color: rgba(201,168,76,0.35); color: var(--gold-lt);
+}
+.payment-option.active {
+  background: rgba(201,168,76,0.15);
+  border-color: rgba(201,168,76,0.6);
+  color: var(--gold-lt);
+  box-shadow: inset 0 0 0 1px rgba(201,168,76,0.28), 0 0 12px rgba(201,168,76,0.18);
+}
+.payment-selected-info {
+  margin-top: -0.35rem;
+  margin-bottom: 1rem;
+  color: rgba(210,184,140,0.72);
+  font-size: 0.84rem;
+}
+.payment-selected-info strong {
+  color: var(--gold-lt);
 }
 .payment-form, .payment-instructions, .payment-confirmation {
   margin-top: 1.2rem; padding: 1.2rem;
