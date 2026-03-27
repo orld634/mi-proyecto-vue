@@ -14,10 +14,10 @@
         <h1 class="brand-title">Brindis Express</h1>
         <div class="nav-section">
           <div class="nav-links">
-            <a href="#" class="nav-link" @click.prevent="handleCatalogAccess">
+            <router-link to="/catalogo" class="nav-link">
               <span class="nav-icon">📋</span>
               Catálogo
-            </a>
+            </router-link>
             <router-link to="/promociones" class="nav-link">
               <span class="nav-icon">🎯</span>
               Promociones
@@ -334,16 +334,6 @@
       </section>
     </div>
 
-    <Transition name="notice-fade">
-      <div v-if="showCatalogAccessNotice" class="catalog-access-notice" role="status" aria-live="polite">
-        <span class="notice-icon">🔒</span>
-        <div class="notice-content">
-          <strong>Acceso restringido</strong>
-          <p>Debes iniciar sesion para acceder al catalogo.</p>
-        </div>
-      </div>
-    </Transition>
-
     <!-- Footer -->
     <footer class="footer" id="contactanos">
       <div class="footer-content">
@@ -435,8 +425,6 @@ const usernombre = ref('')
 
 // Estado del modal
 const showTerms = ref(false)
-const showCatalogAccessNotice = ref(false)
-let catalogNoticeTimer = null
 
 // Computed para verificar si es página de auth
 const isAuthPage = computed(() => {
@@ -495,22 +483,6 @@ function logout() {
 // Función para agregar al carrito
 function addToCart(producto) {
   alert(`${producto.titulo} agregado al carrito!`)
-}
-
-function handleCatalogAccess() {
-  if (isAuthenticated.value) {
-    router.push('/catalogo')
-    return
-  }
-
-  showCatalogAccessNotice.value = true
-  if (catalogNoticeTimer) {
-    clearTimeout(catalogNoticeTimer)
-  }
-  catalogNoticeTimer = setTimeout(() => {
-    showCatalogAccessNotice.value = false
-    catalogNoticeTimer = null
-  }, 2600)
 }
 
 // Función para scroll a la Política de Privacidad
@@ -577,10 +549,6 @@ onUnmounted(() => {
   }
   if (observer) {
     observer.disconnect()
-  }
-  if (catalogNoticeTimer) {
-    clearTimeout(catalogNoticeTimer)
-    catalogNoticeTimer = null
   }
   document.body.style.overflow = ''
 })
@@ -1182,54 +1150,7 @@ watch(isAuthPage, (newValue) => {
 .terms-card-move           { transition: all 0.55s ease-out; }
 
 /* Aviso de acceso a catalogo */
-.catalog-access-notice {
-  position: fixed;
-  top: 105px;
-  right: 1.2rem;
-  z-index: 1200;
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  min-width: 290px;
-  max-width: 360px;
-  padding: 0.9rem 1rem;
-  border-radius: 10px;
-  border: 1px solid rgba(201,168,76,0.35);
-  background: linear-gradient(145deg, rgba(28,22,14,0.98), rgba(19,14,9,0.98));
-  box-shadow: 0 16px 35px rgba(0,0,0,0.55), 0 0 24px rgba(201,168,76,0.1);
-}
-.notice-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(201,168,76,0.1);
-  border: 1px solid rgba(201,168,76,0.24);
-}
-.notice-content strong {
-  display: block;
-  color: var(--gold-lt);
-  font-family: 'Cinzel', serif;
-  font-size: 0.84rem;
-  letter-spacing: 0.6px;
-  margin-bottom: 0.2rem;
-}
-.notice-content p {
-  margin: 0;
-  color: rgba(220,190,140,0.75);
-  font-size: 0.82rem;
-}
-.notice-fade-enter-active,
-.notice-fade-leave-active {
-  transition: opacity 0.22s ease, transform 0.22s ease;
-}
-.notice-fade-enter-from,
-.notice-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
-}
+
 
 /* ══ FOOTER ══ */
 .footer {
@@ -1294,13 +1215,6 @@ watch(isAuthPage, (newValue) => {
   .contact-grid   { grid-template-columns: 1fr; }
   .terms-section  { padding: 2rem 1.2rem; width: min(95vw, 95%); max-height: 86vh; }
   .terms-card     { padding: 1.4rem; }
-  .catalog-access-notice {
-    top: 95px;
-    right: 0.7rem;
-    left: 0.7rem;
-    min-width: auto;
-    max-width: none;
-  }
 }
 @media (max-width: 480px) {
   .navbar-content { padding: 0.8rem 1rem; }

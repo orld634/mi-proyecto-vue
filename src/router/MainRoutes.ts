@@ -1,15 +1,15 @@
 const MainRoutes = {
   path: '/',
   meta: {
-    requiresAuth: true,
+    requiresAuth: false,
   },
-  redirect: '/',
+  redirect: '/auth/login',
   component: () => import('@/views/pages/home.vue'),
   children: [
     {
       name: 'catalogo',
       path: '/catalogo',
-      component: () => import('@/views/pages/Catalogo.vue')
+      component: () => import('@/views/pages/catalogo.vue')
     },
     {
       name: 'admin',
@@ -23,7 +23,7 @@ const MainRoutes = {
     },
     {
       name: 'dashboard',
-      path: '/',
+      path: '/dashboard',
       component: () => import('@/views/dashboard/index.vue'),
       meta: {
         requiresAuth: true,

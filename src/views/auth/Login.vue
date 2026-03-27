@@ -2,22 +2,16 @@
   <div class="login-page">
     <div class="background-overlay" aria-hidden="true"></div>
     <div class="auth-container">
-    <!-- Botones de navegación -->
-    <div class="nav-buttons">
-      <button @click="goHome" class="nav-btn home-btn" title="Volver al inicio">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M3 9L12 2L21 9V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <polyline points="9,22 9,12 15,12 15,22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span>Inicio</span>
-      </button>
-      <button @click="switchView('admin')" class="nav-btn admin-btn" title="Acceso Administrador">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 5C13.66 5 15 6.34 15 8C15 9.66 13.66 11 12 11C10.34 11 9 9.66 9 8C9 6.34 10.34 5 12 5ZM12 19.2C9.5 19.2 7.29 17.92 6 15.98C6.03 13.99 10 12.9 12 12.9C13.99 12.9 17.97 13.99 18 15.98C16.71 17.92 14.5 19.2 12 19.2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span>Admin</span>
-      </button>
-    </div>
+      <!-- Botón Admin (esquina superior izquierda) -->
+      <div v-if="currentView !== 'admin'" class="nav-buttons">
+        <button @click="switchView('admin')" class="nav-btn admin-btn" title="Acceso Administrador">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 5C13.66 5 15 6.34 15 8C15 9.66 13.66 11 12 11C10.34 11 9 9.66 9 8C9 6.34 10.34 5 12 5ZM12 19.2C9.5 19.2 7.29 17.92 6 15.98C6.03 13.99 10 12.9 12 12.9C13.99 12.9 17.97 13.99 18 15.98C16.71 17.92 14.5 19.2 12 19.2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Admin</span>
+        </button>
+      </div>
+    
 
     <!-- Modal de Recuperación de Contraseña -->
     <div v-if="showForgotPasswordModal" class="modal-overlay" @click="closeForgotPasswordModal">
@@ -220,187 +214,179 @@
       </div>
     </div>
 
-    <!-- Componente de Login Principal -->
-    <div v-if="currentView !== 'admin'" class="auth-card">
-      <div class="auth-tabs">
-        <button 
-          class="tab-btn" 
-          :class="{ active: currentView === 'login' }"
-          @click="switchView('login')"
-        >
-          Iniciar Sesión
-        </button>
-        <button 
-          class="tab-btn" 
-          :class="{ active: currentView === 'register' }"
-          @click="switchView('register')"
-        >
-          Registrarse
-        </button>
-      </div>
+    <div class="auth-grid">
+      <div class="auth-grid-left">
+        <div class="auth-left-stage">
+          <!-- Componente de Login Principal -->
+          <div v-show="currentView !== 'admin'" class="auth-card">
+            <div class="auth-tabs">
+              <button 
+                class="tab-btn" 
+                :class="{ active: currentView === 'login' }"
+                @click="switchView('login')"
+              >
+                Iniciar Sesión
+              </button>
+              <button 
+                class="tab-btn" 
+                :class="{ active: currentView === 'register' }"
+                @click="switchView('register')"
+              >
+                Registrarse
+              </button>
+            </div>
 
-      <!-- Vista de Login -->
-      <div v-if="currentView === 'login'" class="auth-view">
-        <div class="auth-header">
-          <h2>Iniciar Sesión</h2>
-          <p>Bienvenido de vuelta</p>
-        </div>
-        
-        <form @submit.prevent="handleLogin" class="auth-form">
-          <div class="form-group">
-            <label for="login-email">Email:</label>
-            <input
-              type="email"
-              id="login-email"
-              v-model="loginData.email"
-              required
-              placeholder="ejemplo@correo.com"
-              :disabled="isLoading"
-            />
-          </div>
+            <!-- Vista de Login -->
+            <div v-if="currentView === 'login'" class="auth-view">
+              <div class="auth-header">
+                <h2>Iniciar Sesión</h2>
+                <p>Bienvenido de vuelta</p>
+              </div>
+              
+              <form @submit.prevent="handleLogin" class="auth-form">
+                <div class="form-group">
+                  <label for="login-email">Email:</label>
+                  <input
+                    type="email"
+                    id="login-email"
+                    v-model="loginData.email"
+                    required
+                    placeholder="ejemplo@correo.com"
+                    :disabled="isLoading"
+                  />
+                </div>
+                
+                <div class="form-group">
+                  <label for="login-password">Contraseña:</label>
+                  <input
+                    type="password"
+                    id="login-password"
+                    v-model="loginData.password"
+                    required
+                    placeholder="Tu contraseña"
+                    :disabled="isLoading"
+                  />
+                </div>
+                
+                <div class="form-options">
+                  <label class="checkbox-container">
+                    <input type="checkbox" v-model="rememberMe">
+                    <span class="checkmark"></span>
+                    Recordarme
+                  </label>
+                  <button 
+                    type="button" 
+                    @click="openForgotPasswordModal" 
+                    class="forgot-password-btn"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                </div>
+                <button type="submit" class="auth-btn" :disabled="isLoading">
+                  <span v-if="isLoading" class="spinner"></span>
+                  {{ isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión' }}
+                </button>
+                <div class="google-divider">
+                  <span class="google-divider-line" />
+                  <span class="google-divider-text">o continúa con</span>
+                  <span class="google-divider-line" />
+                </div>
+                <div id="googleBtn" class="google-login"></div>
+              </form>
+            </div>
+
+            <!-- Vista de Registro -->
+            <div v-if="currentView === 'register'" class="auth-view">
+              <div class="auth-header">
+                <h2>Crear Cuenta</h2>
+                <p>Únete a nuestra plataforma</p>
+              </div>
+              
+              <form @submit.prevent="handleRegister" class="auth-form">
+                <div class="form-group">
+                  <label for="register-nombre">Nombre completo:</label>
+                  <input
+                    type="text"
+                    id="register-nombre"
+                    v-model="registerData.nombre"
+                    required
+                    placeholder="Tu nombre completo"
+                    :disabled="isLoading"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="register-email">Email:</label>
+                  <input
+                    type="email"
+                    id="register-email"
+                    v-model="registerData.email"
+                    required
+                    placeholder="ejemplo@correo.com"
+                    :disabled="isLoading"
+                  />
+                </div>
+                
+                <div class="form-group">
+                  <label for="register-password">Contraseña:</label>
+                  <input
+                    type="password"
+                    id="register-password"
+                    v-model="registerData.password"
+                    required
+                    placeholder="Mínimo 6 caracteres"
+                    :disabled="isLoading"
+                    minlength="6"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="register-confirm-password">Confirmar Contraseña:</label>
+                  <input
+                    type="password"
+                    id="register-confirm-password"
+                    v-model="registerData.confirmPassword"
+                    required
+                    placeholder="Repite tu contraseña"
+                    :disabled="isLoading"
+                  />
+                </div>
+                
+                <div class="form-options">
+                  <label class="checkbox-container">
+                    <input type="checkbox" v-model="acceptTerms" required>
+                    <span class="checkmark"></span>
+                    Acepto los <a href="#" class="terms-link">términos y condiciones</a>
+                  </label>
+                </div>
+                
+                <button type="submit" class="auth-btn" :disabled="isLoading || !acceptTerms">
+                  <span v-if="isLoading" class="spinner"></span>
+                  {{ isLoading ? 'Creando cuenta...' : 'Crear Cuenta' }}
+                </button>
+              </form>
+            </div>
           
-          <div class="form-group">
-            <label for="login-password">Contraseña:</label>
-            <input
-              type="password"
-              id="login-password"
-              v-model="loginData.password"
-              required
-              placeholder="Tu contraseña"
-              :disabled="isLoading"
-            />
+            <!-- Mensajes de error y éxito -->
+            <div v-if="error" class="message error-message">
+              <i class="message-icon">⚠</i>
+              {{ error }}
+            </div>
+
+            <div v-if="successMessage" class="message success-message">
+              <i class="message-icon">✅</i>
+              {{ successMessage }}
+            </div>
           </div>
-          
-          <div class="form-options">
-            <label class="checkbox-container">
-              <input type="checkbox" v-model="rememberMe">
-              <span class="checkmark"></span>
-              Recordarme
-            </label>
-            <button 
-              type="button" 
-              @click="openForgotPasswordModal" 
-              class="forgot-password-btn"
-            >
-              ¿Olvidaste tu contraseña?
-            </button>
-          </div>
-          <div class="google-divider">
-            <span class="google-divider-line" />
-            <span class="google-divider-text">o continúa con</span>
-            <span class="google-divider-line" />
-          </div>
-          <div id="googleBtn" class="google-login"></div>
-          <button type="submit" class="auth-btn" :disabled="isLoading">
-            <span v-if="isLoading" class="spinner"></span>
-            {{ isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión' }}
+
+          <!-- PANEL ADMIN (se abre con botón Admin) -->
+          <div v-show="currentView === 'admin'" class="auth-card admin-card">
+          <!-- Botón para volver al login normal -->
+          <button @click="backToUserLogin" class="back-to-login-btn" title="Volver al login de usuarios">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 12H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Volver al Login</span>
           </button>
-        </form>
-      </div>
-
-      <!-- Vista de Registro -->
-      <div v-if="currentView === 'register'" class="auth-view">
-        <div class="auth-header">
-          <h2>Crear Cuenta</h2>
-          <p>Únete a nuestra plataforma</p>
-        </div>
-        
-        <form @submit.prevent="handleRegister" class="auth-form">
-          <div class="form-group">
-            <label for="register-nombre">Nombre completo:</label>
-            <input
-              type="text"
-              id="register-nombre"
-              v-model="registerData.nombre"
-              required
-              placeholder="Tu nombre completo"
-              :disabled="isLoading"
-            />
-          </div>
-          <div class="form-group">
-            <label for="register-apellido">Apellido:</label>
-            <input
-              type="text"
-              id="register-apellido"
-              v-model="registerData.apellido"
-              required
-              placeholder="Tu apellido completo"
-              :disabled="isLoading"
-            />
-          </div>
-          <div class="form-group">
-            <label for="register-email">Email:</label>
-            <input
-              type="email"
-              id="register-email"
-              v-model="registerData.email"
-              required
-              placeholder="ejemplo@correo.com"
-              :disabled="isLoading"
-            />
-          </div>
-          
-          <div class="form-group">
-            <label for="register-password">Contraseña:</label>
-            <input
-              type="password"
-              id="register-password"
-              v-model="registerData.password"
-              required
-              placeholder="Mínimo 6 caracteres"
-              :disabled="isLoading"
-              minlength="6"
-            />
-          </div>
-          <div class="form-group">
-            <label for="register-confirm-password">Confirmar Contraseña:</label>
-            <input
-              type="password"
-              id="register-confirm-password"
-              v-model="registerData.confirmPassword"
-              required
-              placeholder="Repite tu contraseña"
-              :disabled="isLoading"
-            />
-          </div>
-          
-          <div class="form-options">
-            <label class="checkbox-container">
-              <input type="checkbox" v-model="acceptTerms" required>
-              <span class="checkmark"></span>
-              Acepto los <a href="#" class="terms-link">términos y condiciones</a>
-            </label>
-          </div>
-          
-          <button type="submit" class="auth-btn" :disabled="isLoading || !acceptTerms">
-            <span v-if="isLoading" class="spinner"></span>
-            {{ isLoading ? 'Creando cuenta...' : 'Crear Cuenta' }}
-          </button>
-        </form>
-      </div>
-      
-      <!-- Mensajes de error y éxito -->
-      <div v-if="error" class="message error-message">
-        <i class="message-icon">⚠</i>
-        {{ error }}
-      </div>
-
-      <div v-if="successMessage" class="message success-message">
-        <i class="message-icon">✅</i>
-        {{ successMessage }}
-      </div>
-    </div>
-
-    <!-- VISTA DE ADMIN SEPARADA - SIN TABS -->
-    <div v-if="currentView === 'admin'" class="auth-card admin-card">
-      <!-- Botón para volver al login normal -->
-      <button @click="backToUserLogin" class="back-to-login-btn" title="Volver al login de usuarios">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M19 12H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span>Volver al Login</span>
-      </button>
 
       <!-- Icono de candado animado -->
       <div class="admin-lock-icon">
@@ -507,6 +493,28 @@
         {{ successMessage }}
       </div>
     </div>
+        </div>
+      </div>
+
+      <div class="auth-grid-right">
+        <div class="auth-card guest-card">
+          <div class="auth-view">
+            <div class="auth-header">
+              <h2>Entrar como invitado</h2>
+              <p>Explora la tienda sin registrarte</p>
+            </div>
+            <div class="guest-benefits">
+              <div class="guest-benefit">- Ver productos y promociones</div>
+              <div class="guest-benefit">- Navegar el catálogo</div>
+              <div class="guest-benefit">- Sin necesidad de cuenta</div>
+            </div>
+            <button type="button" class="auth-btn" @click="continueAsGuest">
+              Continuar como invitado
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
     </div>
   </div>
 </template>
@@ -529,7 +537,6 @@ export default {
       rememberMe: true,
       registerData: {
         nombre: "",
-        apellido: "",
         email: "",
         password: "",
         confirmPassword: "",
@@ -643,12 +650,13 @@ export default {
       this.successMessage = null;
     },
 
-    goHome() {
-      this.$router.push("/");
-    },
-
     backToUserLogin() {
       this.switchView("login");
+    },
+
+    continueAsGuest() {
+      this.clearMessages();
+      this.$router.push("/dashboard");
     },
 
     async handleLogin() {
@@ -668,7 +676,7 @@ export default {
         localStorage.setItem("authToken", token);
         localStorage.setItem("usuario", JSON.stringify(usuario));
         this.successMessage = `¡Bienvenido, ${usuario?.nombre || usuario?.email || "Usuario"}!`;
-        setTimeout(() => this.$router.push("/"), 1000);
+        setTimeout(() => this.$router.push("/dashboard"), 1000);
       } catch (err) {
         this.error =
           err.response?.data?.message ||
@@ -758,7 +766,7 @@ export default {
       localStorage.setItem('authToken', data.access_token);
       localStorage.setItem('usuario', JSON.stringify(data.usuario));
       this.successMessage = `¡Bienvenido, ${data.usuario.nombre || data.usuario.email}!`;
-      setTimeout(() => { this.$router.push('/'); }, 1000);
+      setTimeout(() => { this.$router.push('/dashboard'); }, 1000);
     } else {
       this.error = data.message || 'Error al iniciar sesión con Google';
     }
@@ -774,7 +782,7 @@ export default {
       this.clearMessages();
 
       try {
-        if (!this.registerData.nombre || !this.registerData.apellido || !this.registerData.email || !this.registerData.password) {
+        if (!this.registerData.nombre || !this.registerData.email || !this.registerData.password) {
           throw new Error("Por favor completa todos los campos obligatorios");
         }
         if (this.registerData.password !== this.registerData.confirmPassword) {
@@ -784,7 +792,6 @@ export default {
         const registerPayload = {
           email: this.registerData.email.trim().toLowerCase(),
           nombre: this.registerData.nombre.trim(),
-          apellido: this.registerData.apellido.trim(),
           password: this.registerData.password,
           role: this.registerData.role 
         };
@@ -988,6 +995,22 @@ export default {
     radial-gradient(ellipse 60% 40% at 80% 10%, rgba(201,168,76,0.1)  0%, transparent 60%),
     linear-gradient(160deg, rgba(17,14,8,0.85) 0%, rgba(13,10,7,0.9) 50%, rgba(10,8,5,0.85) 100%);
 }
+
+/* Glow extra para más profundidad */
+.background-overlay::before{
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 55% 40% at 30% 30%, rgba(201,168,76,0.12), transparent 65%),
+    radial-gradient(ellipse 50% 35% at 70% 65%, rgba(232,123,43,0.10), transparent 70%);
+  filter: blur(0.5px);
+  opacity: 0.9;
+  animation: overlay-drift 14s ease-in-out infinite alternate;
+}
+@keyframes overlay-drift{
+  from { transform: translate3d(-8px, 6px, 0) scale(1); }
+  to   { transform: translate3d(10px, -8px, 0) scale(1.03); }
+}
  
 /* ══ CONTENEDOR CENTRADO ══ */
 .auth-container {
@@ -996,10 +1019,67 @@ export default {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  padding: 6rem 1.5rem 2rem;
+  padding: 4.25rem 1.5rem 1.5rem;
   width: 100%;
 }
  
+/* ══ LAYOUT (LOGIN+ADMIN | INVITADO) ══ */
+.auth-grid{
+  width: 100%;
+  max-width: 1400px;
+  display: grid;
+  grid-template-columns: minmax(360px, 480px) minmax(360px, 480px);
+  justify-content: space-between;
+  gap: 0;
+  align-items: start;
+}
+
+.auth-grid-left{ justify-self: stretch; }
+.auth-grid-right{ justify-self: end; }
+.auth-grid-left,
+.auth-grid-right{
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+/* Mantiene estable el panel izquierdo al cambiar vistas */
+.auth-left-stage{
+  width: 100%;
+  max-width: 440px;
+  position: relative;
+  min-height: 700px;
+  height: min(820px, calc(100vh - 220px));
+}
+.auth-left-stage > .auth-card{
+  position: absolute;
+  inset: 0;
+  height: 100%;
+}
+.auth-left-stage > .auth-card[style*="display: none"]{
+  pointer-events: none;
+}
+.auth-left-stage .auth-view{
+  max-height: 100%;
+  overflow: visible;
+}
+.guest-benefits{
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.4rem 0 0.8rem;
+  color: rgba(200,175,130,0.65);
+  font-size: 0.9rem;
+}
+.guest-benefit{
+  padding: 0.65rem 0.85rem;
+  background: rgba(5,3,1,0.35);
+  border: 1px solid rgba(201,168,76,0.12);
+  border-radius: 8px;
+}
+@media (max-width: 980px){
+  .auth-grid{ grid-template-columns: 1fr; }
+}
+
 /* ══ BOTONES NAV (INICIO / ADMIN) ══ */
 .nav-buttons {
   position: fixed;
