@@ -821,15 +821,15 @@ watch(isAuthPage, (newValue) => {
 .slide-title {
   font-family: 'Cinzel', serif;
   font-size: clamp(3rem, 8vw, 6rem); font-weight: 700; letter-spacing: 4px;
-  margin-bottom: 0.8rem;
-  background: linear-gradient(160deg, #E8C97A 0%, #C9A84C 40%, #E87B2B 80%, #C9A84C 100%);
+  margin-bottom: 0.9rem;
+  background: linear-gradient(160deg, #f1c148bd 0%, #C9A84C 40%, #E87B2B 80%, #C9A84C 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   filter: drop-shadow(0 0 30px rgba(201,168,76,0.35));
 }
 .slide-subtitle {
   font-family: 'Playfair Display', serif;
-  font-size: clamp(1rem, 3vw, 1.8rem); font-weight: 400; font-style: italic;
-  color: rgba(220,190,140,0.6); letter-spacing: 4px; text-transform: uppercase;
+  font-size: clamp(2rem, 3vw, 1.8rem); font-weight: 400; font-style: italic;
+  color: rgba(238, 169, 50, 0.789); letter-spacing: 4px; text-transform: uppercase;
 }
 
 /* Botones carrusel */
@@ -892,7 +892,7 @@ watch(isAuthPage, (newValue) => {
 }
 .card-content { padding: 1.8rem; }
 .card-content p {
-  color: rgba(220,190,140,0.65); font-size: 1rem; line-height: 1.75; margin-bottom: 1.2rem;
+  color: rgba(235, 181, 88, 0.711); font-size: 1.23rem; line-height: 1.75; margin-bottom: 1.2rem;
 }
 .card-content p:last-child { margin-bottom: 0; }
 .card-content strong { color: var(--gold-lt); font-weight: 700; }
@@ -960,7 +960,7 @@ watch(isAuthPage, (newValue) => {
   text-shadow: 0 0 12px rgba(201,168,76,0.2);
 }
 .product-description {
-  color: rgba(200,175,130,0.4); font-size: 0.82rem;
+  color: rgba(227, 170, 64, 0.816); font-size: 1.13rem;
   line-height: 1.65; margin-bottom: 1.2rem; font-weight: 300;
 }
 

@@ -149,7 +149,14 @@
         <div class="sh-line"/>
       </div>
 
-      <div class="promo-grid">
+      <!-- Estado de carga -->
+      <div v-if="isLoadingPromos" class="loading-promos">
+        <div class="loading-spinner-gold"/>
+        <p>Cargando promociones...</p>
+      </div>
+
+      <!-- Grid de cards -->
+      <div v-else class="promo-grid">
         <div
           v-for="(promo, i) in filteredPromos"
           :key="promo.id"
@@ -179,7 +186,7 @@
           </div>
 
           <div class="pcard-body">
-            <div class="pcard-tags" v-if="promo.tags">
+            <div class="pcard-tags" v-if="promo.tags && promo.tags.length">
               <span v-for="t in promo.tags" :key="t" class="ptag">{{ t }}</span>
             </div>
             <h3 class="pcard-title">{{ promo.nombre_promocion }}</h3>
@@ -187,8 +194,10 @@
             <div class="pcard-divider"/>
             <div class="pcard-price-row">
               <div class="pcard-price">
-                <span class="pp-old" v-if="promo.precio_original">{{ formatPrice(promo.precio_original) }}</span>
-                <span class="pp-new">{{ formatPrice(promo.precio_promocional) }}</span>
+                <!-- ← AJUSTADO: sin precio, solo muestra el descuento -->
+                <span class="pp-old" v-if="promo.descuento">Precio especial</span>
+                <span class="pp-new" v-if="promo.descuento">{{ promo.descuento }}% OFF</span>
+                <span class="pp-new" v-else>Ver precio</span>
               </div>
               <button class="pcard-btn" @click="buy(promo)">
                 <span class="btn-label">Comprar</span>
@@ -201,7 +210,8 @@
         </div>
       </div>
 
-      <div class="empty" v-if="filteredPromos.length === 0">
+      <!-- Estado vacío -->
+      <div class="empty" v-if="!isLoadingPromos && filteredPromos.length === 0">
         <div class="empty-ico">🍾</div>
         <h3>Sin promociones en esta categoría</h3>
         <p>Intenta otro filtro o vuelve pronto</p>
@@ -252,14 +262,13 @@
         <span class="notice-icon">🔒</span>
         <div class="notice-content">
           <strong>Acceso restringido</strong>
-          <p>Debes iniciar sesion para acceder al catalogo.</p>
+          <p>Debes iniciar sesión para acceder al catálogo.</p>
         </div>
       </div>
     </Transition>
 
   </div>
 </template>
-
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -275,6 +284,8 @@ const showCatalogAccessNotice = ref(false)
 const activeTab       = ref('all')
 let catalogNoticeTimer = null
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8222'
+
 const tabs = [
   { id: 'all',     label: 'Todas',           icon: '🎁' },
   { id: 'vip',     label: 'VIP',             icon: '⭐', badge: '-15%' },
@@ -282,57 +293,60 @@ const tabs = [
   { id: 'limited', label: 'Tiempo Limitado', icon: '⏰' },
 ]
 
-const promos = ref([
-  {
-    id: 1,
-    nombre_promocion: "Jack Daniel's Old No.7 - 1L",
-    descripcion: 'Whisky americano icónico con notas de vainilla y caramelo tostado.',
-    image: 'https://lacaretalicores.com/cdn/shop/products/jackdaniels1l_1200x1200.jpg',
-    precio_promocional: 115000, precio_original: 145000, descuento: 21,
-    exclusive: 'VIP & Premium', rarity: 'vip',
-    tags: ['Whisky', 'Importado', 'Especial'],
-    fecha_fin: new Date(Date.now() + 24 * 3600000),
-  },
-  {
-    id: 2,
-    nombre_promocion: 'Dom Pérignon Vintage 2015',
-    descripcion: 'Champagne francés de lujo. Solo para los más exigentes.',
-    image: 'https://muttsmousers.ca/media/catalog/product/cache/6ab565c3c7e8d6f3f386bd0dc87c9acc/d/o/dog_perignon_gift_set2_grande2.jpg',
-    precio_promocional: 380000, precio_original: 520000, descuento: 27,
-    exclusive: 'Solo Premium', rarity: 'premium',
-    tags: ['Champagne', 'Lujo', 'Exclusivo'],
-    fecha_fin: new Date(Date.now() + 48 * 3600000),
-  },
-  {
-    id: 3,
-    nombre_promocion: "Buchanan's 18 Años",
-    descripcion: 'Edición especial 18 años con caja de regalo incluida.',
-    image: 'https://lacaretalicores.com/cdn/shop/files/WhatsAppImage2024-05-21at4.36.34PM.jpg',
-    precio_promocional: 165000, precio_original: null, descuento: null,
-    exclusive: null, rarity: 'limited',
-    tags: ['Whisky', 'Escocia', 'Regalo'],
-    fecha_fin: new Date(Date.now() + 6 * 3600000),
-  },
-  {
-    id: 4,
-    nombre_promocion: 'Patrón Silver 750ml',
-    descripcion: 'Tequila 100% agave azul. Suave, premium y perfecto para celebrar.',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Patron_silver.jpg/800px-Patron_silver.jpg',
-    precio_promocional: 190000, precio_original: 240000, descuento: 20,
-    exclusive: 'VIP', rarity: 'vip',
-    tags: ['Tequila', 'México', 'Premium'],
-    fecha_fin: new Date(Date.now() + 12 * 3600000),
-  },
-])
+// ── Promociones desde el backend ─────────────────────────────
+const promos          = ref([])
+const isLoadingPromos = ref(false)
 
+function getRarity(descuento) {
+  if (!descuento)       return 'limited'
+  if (descuento >= 25)  return 'premium'
+  if (descuento >= 15)  return 'vip'
+  return 'limited'
+}
+
+async function loadPromos() {
+  try {
+    isLoadingPromos.value = true
+    const res = await fetch(`${API_URL}/promociones`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
+      }
+    })
+    if (!res.ok) throw new Error('Error al cargar promociones')
+    const data = await res.json()
+
+    promos.value = data
+      .filter(p => p.activo)
+      .map(p => ({
+        id:               p.id_promocion,
+        nombre_promocion: p.nombre_promocion,
+        descripcion:      p.descripcion || 'Promoción especial por tiempo limitado.',
+        image: p.producto?.imagen_url || 'https://images.unsplash.com/photo-1569529465841-dfecdab7503b?auto=format&fit=crop&w=400&q=80',
+        precio_promocional: Number(p.precio_promocional) || 0,
+        precio_original:    Number(p.precio_original)    || null,
+        descuento:          p.descuento,
+        fecha_fin:          p.fecha_fin ? new Date(p.fecha_fin) : null,
+        tags:               p.tags || [],
+        rarity:             getRarity(p.descuento),
+        exclusive:          p.exclusive || null,
+      }))
+  } catch (error) {
+    console.error('Error cargando promociones:', error)
+  } finally {
+    isLoadingPromos.value = false
+  }
+}
+
+// ── Filtros ───────────────────────────────────────────────────
 const filteredPromos = computed(() => promos.value.filter(p => {
-  if (activeTab.value === 'all')                               return true
-  if (activeTab.value === 'vip'     && p.rarity === 'vip')    return true
+  if (activeTab.value === 'all')                                return true
+  if (activeTab.value === 'vip'     && p.rarity === 'vip')     return true
   if (activeTab.value === 'premium' && p.rarity === 'premium') return true
-  if (activeTab.value === 'limited' && p.fecha_fin)           return true
+  if (activeTab.value === 'limited' && p.fecha_fin)            return true
   return false
 }))
 
+// ── Helpers ───────────────────────────────────────────────────
 function formatPrice(n) {
   if (!n) return ''
   return '$' + Number(n).toLocaleString('es-CO')
@@ -355,25 +369,20 @@ function logout() {
 }
 
 function handleCatalogAccess(fromMobile = false) {
-  if (fromMobile) {
-    mobileOpen.value = false
-  }
-
+  if (fromMobile) mobileOpen.value = false
   if (isAuthenticated.value) {
     router.push('/catalogo')
     return
   }
-
   showCatalogAccessNotice.value = true
-  if (catalogNoticeTimer) {
-    clearTimeout(catalogNoticeTimer)
-  }
+  if (catalogNoticeTimer) clearTimeout(catalogNoticeTimer)
   catalogNoticeTimer = setTimeout(() => {
     showCatalogAccessNotice.value = false
     catalogNoticeTimer = null
   }, 2600)
 }
 
+// ── Countdown ─────────────────────────────────────────────────
 const countdown    = ref({ days: 0, hours: 0, minutes: 0, seconds: 0 })
 const hasCountdown = ref(true)
 let timerInterval  = null
@@ -389,6 +398,7 @@ function tick() {
   }
 }
 
+// ── Mounted ───────────────────────────────────────────────────
 onMounted(() => {
   try {
     const token = localStorage.getItem('authToken')
@@ -399,6 +409,9 @@ onMounted(() => {
       userName.value = u.nombre || u.email || 'Usuario'
     }
   } catch {}
+
+  loadPromos()
+
   tick()
   timerInterval = setInterval(tick, 1000)
   const onScroll = () => { isScrolled.value = window.scrollY > 50 }
@@ -413,7 +426,6 @@ onMounted(() => {
   })
 })
 </script>
-
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Cinzel:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
 
@@ -1017,5 +1029,27 @@ onMounted(() => {
     min-width: auto;
     max-width: none;
   }
+
+.loading-promos {
+  text-align: center; padding: 4rem 2rem;
+  display: flex; flex-direction: column; align-items: center; gap: 1rem;
+}
+.loading-promos p {
+  font-family: 'Cinzel', serif; font-size: 0.85rem;
+  letter-spacing: 2px; color: var(--gold); opacity: 0.6;
+}
+.loading-spinner-gold {
+  width: 40px; height: 40px;
+  border: 2px solid rgba(201,168,76,0.15);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+
+
+
+
 }
 </style>

@@ -1109,7 +1109,7 @@ export default {
   font-family: 'Cinzel', serif;
   font-size: 1.7rem; font-weight: 700;
   letter-spacing: 3px; text-transform: uppercase;
-  background: linear-gradient(135deg, #FFE066 0%, var(--gold) 45%, var(--amber) 100%);
+  background: linear-gradient(135deg, #FFEA9F 0%, #E8C97A 40%, #C9A84C 75%, #FFE066 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   filter: drop-shadow(0 2px 12px rgba(201,168,76,0.35));
   margin-bottom: 0.4rem;
@@ -1117,7 +1117,7 @@ export default {
 .auth-header p {
   font-family: 'Playfair Display', serif;
   font-style: italic; font-size: 0.88rem;
-  color: rgba(200,175,130,0.45);
+  color: rgba(240, 220, 180, 0.75);
   letter-spacing: 0.5px;
 }
  
@@ -1183,7 +1183,7 @@ export default {
 .forgot-password-btn:hover { color: var(--gold-lt); text-decoration: underline; }
  
 .terms-link { color: var(--gold); text-decoration: none; transition: color 0.2s; }
-.terms-link:hover { color: var(--amber); }
+.terms-link:hover { color: #FFEA9F; }
  
 /* ══ DIVISOR GOOGLE ══ */
 .google-divider {
@@ -1211,7 +1211,7 @@ export default {
 .auth-btn {
   display: flex; align-items: center; justify-content: center; gap: 0.5rem;
   width: 100%; padding: 0.9rem;
-  background: linear-gradient(135deg, rgba(201,168,76,0.18) 0%, rgba(232,123,43,0.14) 100%);
+  background: linear-gradient(135deg, rgba(246, 204, 88, 0.238) 0%, rgba(232,123,43,0.14) 100%);
   border: 1px solid rgba(201,168,76,0.35);
   border-radius: 6px;
   color: var(--gold-lt);
@@ -1223,7 +1223,7 @@ export default {
   box-shadow: 0 4px 16px rgba(0,0,0,0.3);
 }
 .auth-btn:hover {
-  background: linear-gradient(135deg, rgba(201,168,76,0.28) 0%, rgba(232,123,43,0.22) 100%);
+  background: linear-gradient(135deg, rgba(222, 171, 52, 0.23) 0%, rgba(232,123,43,0.22) 100%);
   border-color: rgba(201,168,76,0.6);
   box-shadow: 0 6px 24px rgba(0,0,0,0.4), 0 0 16px rgba(201,168,76,0.15);
   transform: translateY(-1px);
@@ -1280,14 +1280,19 @@ export default {
  
 /* Candado animado */
 .admin-lock-icon {
-  position: absolute; top: -36px; right: 28px;
-  width: 72px; height: 72px;
-  background: rgba(232,123,43,0.08);
-  border: 1px solid rgba(232,123,43,0.4);
+  position: absolute; 
+  top: -28px;           /* Subido un poco menos */
+  right: 32px;          /* Ajustado para centrar mejor */
+  width: 52px;          /* Reducido de 72px → 52px */
+  height: 52px;         /* Reducido de 72px → 52px */
+  background: rgba(232,123,43,0.10);
+  border: 1px solid rgba(232,123,43,0.35);
   border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 0 30px rgba(232,123,43,0.3);
-  animation: lock-pulse 2.5s ease-in-out infinite;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(232,123,43,0.25);
+  animation: lock-pulse 3s ease-in-out infinite;
 }
 .admin-lock-icon svg,
 .admin-lock-svg {
@@ -1327,7 +1332,7 @@ export default {
   font-family: 'Cinzel', serif !important;
   font-size: 1.6rem !important; font-weight: 700 !important;
   letter-spacing: 3px !important; text-transform: uppercase;
-  background: linear-gradient(135deg, #FFB347, var(--amber), #FF6B00) !important;
+  background: linear-gradient(135deg, #ff9c12, var(--amber), #FF6B00) !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   background-clip: text !important;
@@ -1338,8 +1343,8 @@ export default {
 .admin-header p {
   font-family: 'Playfair Display', serif !important;
   font-style: italic !important;
-  color: rgba(200,160,100,0.45) !important;
-  font-size: 0.85rem !important;
+  color: rgba(251, 198, 118, 0.622) !important;
+  font-size: 0.99rem !important;
 }
  
 .admin-form { gap: 1.4rem !important; }
@@ -1348,7 +1353,7 @@ export default {
   font-family: 'Cinzel', serif !important;
   font-size: 0.68rem !important; font-weight: 600 !important;
   letter-spacing: 2px !important;
-  color: rgba(232,123,43,0.6) !important;
+  color: rgba(201, 168, 76, 0.85);
   display: flex; align-items: center; gap: 0.5rem;
   margin-bottom: 0.4rem;
 }
@@ -1364,7 +1369,7 @@ export default {
   background: rgba(5,2,0,0.7) !important;
   border: 1px solid rgba(232,123,43,0.2) !important;
   border-radius: 6px !important;
-  color: rgba(240,210,170,0.9) !important;
+  color: #FFE8B8;
   font-family: 'DM Sans', sans-serif;
   font-size: 0.92rem;
   transition: all 0.25s ease;
@@ -1375,7 +1380,7 @@ export default {
   background: rgba(5,2,0,0.9) !important;
   box-shadow: 0 0 0 3px rgba(232,123,43,0.1) !important;
 }
-.admin-input::placeholder { color: rgba(200,160,100,0.25) !important; }
+.admin-input::placeholder { color: rgba(232, 200, 140, 0.45);}
  
 .admin-password-wrapper { position: relative; display: flex; align-items: center; }
 .admin-password-toggle {
@@ -1404,18 +1409,40 @@ export default {
   border: 1px solid rgba(232,123,43,0.4) !important;
   color: #FFB347 !important;
   font-family: 'Cinzel', serif !important;
-  font-size: 0.78rem !important; font-weight: 600 !important;
-  letter-spacing: 2px !important;
+  font-size: 0.72rem !important;           /* Reducido de 0.78rem */
+  font-weight: 600 !important;
+  letter-spacing: 1.8px !important;        /* Ligero ajuste */
+  text-transform: uppercase;
+  padding: 0.75rem 1.2rem !important;      /* Más pequeño en altura y ancho */
+  min-height: 48px !important;             /* Altura más compacta */
+  border-radius: 8px !important;
   box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
+  transition: all 0.25s ease;
+  margin-top: 0.8rem !important;
 }
 .admin-btn:hover {
   background: linear-gradient(135deg, rgba(232,123,43,0.28) 0%, rgba(200,90,20,0.22) 100%) !important;
   border-color: rgba(232,123,43,0.6) !important;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.4), 0 0 16px rgba(232,123,43,0.15) !important;
-  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4), 0 0 16px rgba(232,123,43,0.18) !important;
+  transform: translateY(-1px);
 }
+
+.admin-btn:disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+
+
+
+
+
+
+
+
 .admin-btn::before { display: none !important; }
-.admin-btn svg { stroke: #FFB347; filter: none !important; }
+.admin-btn svg { stroke: #FFB347; filter: none !important;width: 18px; }
  
 /* Mensajes admin */
 .admin-card .error-message   { background: rgba(220,38,38,0.12) !important;  border-color: rgba(220,38,38,0.3) !important;  color: #FCA5A5 !important; }
@@ -1458,7 +1485,7 @@ export default {
 .modal-header h3 {
   font-family: 'Cinzel', serif;
   font-size: 1.1rem; font-weight: 700; letter-spacing: 2px;
-  color: var(--gold-lt);
+  color: #FFEA9F;
 }
 .close-btn {
   background: transparent;
@@ -1475,7 +1502,7 @@ export default {
  
 .modal-info { text-align: center; margin-bottom: 1.8rem; }
 .info-icon { font-size: 2.8rem; margin-bottom: 0.8rem; animation: none; }
-.modal-info p { color: rgba(200,175,130,0.55); font-size: 0.88rem; line-height: 1.7; }
+.modal-info p { color: rgba(240, 220, 180, 0.70);font-size: 0.88rem; line-height: 1.7; }
 .email-info   { color: rgba(200,175,130,0.35) !important; font-size: 0.82rem !important; }
  
 .modal-form { display: flex; flex-direction: column; gap: 1.2rem; }
