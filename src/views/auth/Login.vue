@@ -4,11 +4,21 @@
     <div class="auth-container">
       <!-- Botón Admin (esquina superior izquierda) -->
       <div v-if="currentView !== 'admin'" class="nav-buttons">
+        <!-- Botón Admin -->
         <button @click="switchView('admin')" class="nav-btn admin-btn" title="Acceso Administrador">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 5C13.66 5 15 6.34 15 8C15 9.66 13.66 11 12 11C10.34 11 9 9.66 9 8C9 6.34 10.34 5 12 5ZM12 19.2C9.5 19.2 7.29 17.92 6 15.98C6.03 13.99 10 12.9 12 12.9C13.99 12.9 17.97 13.99 18 15.98C16.71 17.92 14.5 19.2 12 19.2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           <span>Admin</span>
+        </button>
+
+        <!-- Botón Volver al Inicio -->
+        <button @click="goHome" class="nav-btn home-btn" title="Volver al Inicio">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 22V12H15V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Inicio</span>
         </button>
       </div>
     
@@ -215,10 +225,35 @@
     </div>
 
     <div class="auth-grid">
+      <!-- Sección de Marca (Lado Izquierdo) -->
+      <div class="auth-brand-section">
+        <div class="brand-content-wrapper">
+          <div class="brand-badge">Sabor & Excelencia</div>
+          <h1 class="brand-main-title">EL ARTE DEL <br/><span class="highlight-gold">BUEN VIVIR</span></h1>
+          <p class="brand-subtitle">
+            Un refugio para los amantes de la alta cocina y la coctelería de autor. 
+            Regístrate para vivir una experiencia gastronómica sin precedentes.
+          </p>
+          
+          <div class="brand-stats">
+            <div class="stat-box">
+              <span class="stat-number">25+</span>
+              <span class="stat-label">Años de Tradición</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-number">12</span>
+              <span class="stat-label">Chef's Estrellas</span>
+            </div>
+          </div>
+          
+          <div class="brand-decorative-line"></div>
+        </div>
+      </div>
+
       <div class="auth-grid-left">
         <div class="auth-left-stage">
           <!-- Componente de Login Principal -->
-          <div v-show="currentView !== 'admin'" class="auth-card">
+          <div v-if="currentView !== 'admin'" class="auth-card">
             <div class="auth-tabs">
               <button 
                 class="tab-btn" 
@@ -378,7 +413,7 @@
           </div>
 
           <!-- PANEL ADMIN (se abre con botón Admin) -->
-          <div v-show="currentView === 'admin'" class="auth-card admin-card">
+          <div v-if="currentView === 'admin'" class="auth-card admin-card">
           <!-- Botón para volver al login normal -->
           <button @click="backToUserLogin" class="back-to-login-btn" title="Volver al login de usuarios">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -492,25 +527,6 @@
         <i class="message-icon">✅</i>
         {{ successMessage }}
       </div>
-    </div>
-        </div>
-      </div>
-
-      <div class="auth-grid-right">
-        <div class="auth-card guest-card">
-          <div class="auth-view">
-            <div class="auth-header">
-              <h2>Entrar como invitado</h2>
-              <p>Explora la tienda sin registrarte</p>
-            </div>
-            <div class="guest-benefits">
-              <div class="guest-benefit">- Ver productos y promociones</div>
-              <div class="guest-benefit">- Navegar el catálogo</div>
-              <div class="guest-benefit">- Sin necesidad de cuenta</div>
-            </div>
-            <button type="button" class="auth-btn" @click="continueAsGuest">
-              Continuar como invitado
-            </button>
           </div>
         </div>
       </div>
@@ -654,10 +670,11 @@ export default {
       this.switchView("login");
     },
 
-    continueAsGuest() {
-      this.clearMessages();
-      this.$router.push("/dashboard");
+    goHome() {
+      this.$router.push("/");
     },
+
+
 
     async handleLogin() {
       this.isLoading = true;
@@ -676,7 +693,7 @@ export default {
         localStorage.setItem("authToken", token);
         localStorage.setItem("usuario", JSON.stringify(usuario));
         this.successMessage = `¡Bienvenido, ${usuario?.nombre || usuario?.email || "Usuario"}!`;
-        setTimeout(() => this.$router.push("/dashboard"), 1000);
+        setTimeout(() => this.$router.push("/home"), 1000);
       } catch (err) {
         this.error =
           err.response?.data?.message ||
@@ -720,12 +737,12 @@ export default {
     },
 
     waitForGoogleSDK() {
-  if (typeof google !== 'undefined' && google.accounts) {
-    this.initGoogleButton();
-  } else {
-    setTimeout(this.waitForGoogleSDK, 300);
-  }
-},
+      if (typeof google !== 'undefined' && google.accounts) {
+        this.initGoogleButton();
+      } else {
+        setTimeout(() => this.waitForGoogleSDK(), 300);
+      }
+    },
     // --- LÓGICA DE GOOGLE ---
     initGoogleButton() {
       if (typeof google === 'undefined') {
@@ -971,7 +988,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow-y: auto;
   font-family: 'DM Sans', sans-serif;
 }
  
@@ -984,32 +1001,52 @@ export default {
     center/cover no-repeat;
   filter: brightness(0.3) saturate(1.2);
 }
- 
+
 /* Grid dorada sutil encima */
 .background-overlay {
   position: fixed; inset: 0; z-index: 1; pointer-events: none;
   background:
-    repeating-linear-gradient(90deg, transparent 0px, transparent 119px, rgba(201,168,76,0.03) 120px),
-    repeating-linear-gradient(0deg,  transparent 0px, transparent 119px, rgba(201,168,76,0.03) 120px),
-    radial-gradient(ellipse 80% 60% at 20% 90%, rgba(232,123,43,0.15) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 10%, rgba(201,168,76,0.1)  0%, transparent 60%),
-    linear-gradient(160deg, rgba(17,14,8,0.85) 0%, rgba(13,10,7,0.9) 50%, rgba(10,8,5,0.85) 100%);
+    repeating-linear-gradient(90deg, transparent 0px, transparent 159px, rgba(201,168,76,0.04) 160px),
+    repeating-linear-gradient(0deg,  transparent 0px, transparent 159px, rgba(201,168,76,0.04) 160px),
+    radial-gradient(ellipse 70% 50% at 10% 20%, rgba(201,168,76,0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 90% 80%, rgba(232,123,43,0.15)  0%, transparent 70%),
+    radial-gradient(circle at center, transparent 0%, rgba(13,10,7,0.4) 100%),
+    linear-gradient(160deg, rgba(15,12,8,0.92) 0%, rgba(10,8,5,0.95) 50%, rgba(8,6,4,0.92) 100%);
 }
 
-/* Glow extra para más profundidad */
 .background-overlay::before{
   content: '';
   position: absolute; inset: 0;
   background:
-    radial-gradient(ellipse 55% 40% at 30% 30%, rgba(201,168,76,0.12), transparent 65%),
-    radial-gradient(ellipse 50% 35% at 70% 65%, rgba(232,123,43,0.10), transparent 70%);
-  filter: blur(0.5px);
-  opacity: 0.9;
-  animation: overlay-drift 14s ease-in-out infinite alternate;
+    radial-gradient(circle at 20% 30%, rgba(201,168,76,0.15), transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(232,123,43,0.12), transparent 50%);
+  filter: blur(80px);
+  opacity: 0.8;
+  animation: overlay-drift 20s ease-in-out infinite alternate;
 }
+
+/* Destello sutil que cruza la pantalla */
+.background-overlay::after {
+  content: '';
+  position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+  background: conic-gradient(from 180deg at 50% 50%, 
+    transparent 0deg, 
+    rgba(201,168,76,0.03) 40deg, 
+    transparent 80deg
+  );
+  animation: sweep 15s linear infinite;
+  z-index: -1;
+}
+
+@keyframes sweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 @keyframes overlay-drift{
-  from { transform: translate3d(-8px, 6px, 0) scale(1); }
-  to   { transform: translate3d(10px, -8px, 0) scale(1.03); }
+  0% { transform: scale(1) translate(0, 0); }
+  50% { transform: scale(1.1) translate(2%, 2%); }
+  100% { transform: scale(1.05) translate(-1%, -1%); }
 }
  
 /* ══ CONTENEDOR CENTRADO ══ */
@@ -1027,17 +1064,110 @@ export default {
 .auth-grid{
   width: 100%;
   max-width: 1400px;
-  display: grid;
-  grid-template-columns: minmax(360px, 480px) minmax(360px, 480px);
+  display: flex;
   justify-content: space-between;
-  gap: 0;
-  align-items: start;
+  align-items: center;
+  gap: 4rem;
 }
 
-.auth-grid-left{ justify-self: stretch; }
-.auth-grid-right{ justify-self: end; }
-.auth-grid-left,
-.auth-grid-right{
+/* Sección de Marca Izquierda */
+.auth-brand-section {
+  flex: 1;
+  max-width: 600px;
+  animation: brand-fade 1.2s ease-out both;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.brand-content-wrapper {
+  position: relative;
+  z-index: 10;
+}
+
+.brand-badge {
+  display: inline-block;
+  padding: 0.5rem 1.2rem;
+  background: rgba(201,168,76,0.1);
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 30px;
+  color: var(--gold-lt);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+}
+
+.brand-main-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(2.5rem, 5vw, 4.2rem);
+  font-weight: 700;
+  line-height: 1.1;
+  color: #FFF;
+  letter-spacing: -1px;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.highlight-gold {
+  background: linear-gradient(135deg, #FFEA9F 0%, #E8C97A 50%, #C9A84C 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 10px rgba(201,168,76,0.3));
+}
+
+.brand-subtitle {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  font-style: italic;
+  color: rgba(240, 220, 180, 0.85);
+  line-height: 1.6;
+  max-width: 500px;
+  margin-bottom: 3rem;
+}
+
+.brand-stats {
+  display: flex;
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+.stat-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.stat-number {
+  font-family: 'Cinzel', serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--gold-lt);
+}
+
+.stat-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.75rem;
+  color: rgba(201,168,76,0.6);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.brand-decorative-line {
+  width: 80px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+}
+
+@keyframes brand-fade {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.auth-grid-left{
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
@@ -1049,12 +1179,13 @@ export default {
   max-width: 440px;
   position: relative;
   min-height: 700px;
-  height: min(820px, calc(100vh - 220px));
+  height: auto;
 }
 .auth-left-stage > .auth-card{
-  position: absolute;
-  inset: 0;
-  height: 100%;
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+  z-index: 5;
 }
 .auth-left-stage > .auth-card[style*="display: none"]{
   pointer-events: none;
@@ -1076,15 +1207,37 @@ export default {
   border: 1px solid rgba(201,168,76,0.12);
   border-radius: 8px;
 }
+@media (max-width: 1100px){
+  .auth-grid {
+    flex-direction: column;
+    justify-content: center;
+    gap: 3rem;
+    padding: 2rem 0;
+  }
+  .auth-brand-section {
+    text-align: center;
+    align-items: center;
+  }
+  .brand-subtitle {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .brand-stats {
+    justify-content: center;
+  }
+  .brand-decorative-line {
+    margin: 0 auto;
+  }
+}
 @media (max-width: 980px){
-  .auth-grid{ grid-template-columns: 1fr; }
+  .auth-grid{ align-items: center; }
 }
 
 /* ══ BOTONES NAV (INICIO / ADMIN) ══ */
 .nav-buttons {
   position: fixed;
   top: 1.8rem; left: 1.8rem;
-  display: flex; gap: 0.8rem;
+  display: flex; flex-direction: column; gap: 0.8rem;
   z-index: 100;
 }
  
@@ -1512,14 +1665,6 @@ export default {
   cursor: not-allowed !important;
   transform: none !important;
 }
-
-
-
-
-
-
-
-
 
 .admin-btn::before { display: none !important; }
 .admin-btn svg { stroke: #FFB347; filter: none !important;width: 18px; }

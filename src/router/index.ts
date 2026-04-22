@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import MainRoutes, { PromoRoutes } from './MainRoutes';
+import MainRoutes, { PromoRoutes, MenuVirtualRoutes } from './MainRoutes';
 import AuthRoutes from './AuthRoutes';
 
 export const router = createRouter({
@@ -11,6 +11,7 @@ export const router = createRouter({
     },
     MainRoutes,
     PromoRoutes,
+    MenuVirtualRoutes,
     AuthRoutes
   ]
 });

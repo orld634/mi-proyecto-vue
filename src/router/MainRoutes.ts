@@ -3,14 +3,19 @@ const MainRoutes = {
   meta: {
     requiresAuth: false,
   },
-  redirect: '/auth/login',
   component: () => import('@/views/pages/home.vue'),
   children: [
+    {
+      name: 'home',
+      path: '/home',
+      component: () => import('@/views/pages/home.vue')
+    },
     {
       name: 'catalogo',
       path: '/catalogo',
       component: () => import('@/views/pages/catalogo.vue')
     },
+
     {
       name: 'admin',
       path: '/admin',
@@ -83,6 +88,15 @@ export const PromoRoutes = {
   path: '/promociones',
   name: 'promociones',
   component: () => import('@/views/pages/promociones.vue'),
+  meta: {
+    requiresAuth: false
+  }
+};
+
+export const MenuVirtualRoutes = {
+  path: '/menuvirtual',
+  name: 'menuvirtual',
+  component: () => import('@/views/pages/menuvirtual.vue'),
   meta: {
     requiresAuth: false
   }

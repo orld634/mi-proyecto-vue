@@ -2190,23 +2190,6 @@ onMounted(async () => {
 
 /* ← aquí empieza lo que ya existía */
 .no-products-message { text-align:center; padding:3rem; background:rgba(40,40,40,0.5); border-radius:10px; border:2px dashed rgba(255,215,0,0.3); }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 .products-in-category .price-display  { padding:0.6rem; background:rgba(255,215,0,0.1); border-radius:6px; }
 .no-products-message { text-align:center; padding:3rem; background:rgba(40,40,40,0.5); border-radius:10px; border:2px dashed rgba(255,215,0,0.3); }
 .no-products-message p { color:#b0b0b0; font-size:1.3rem; margin:0; }

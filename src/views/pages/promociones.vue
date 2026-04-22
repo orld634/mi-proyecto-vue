@@ -12,14 +12,17 @@
         </router-link>
 
         <div class="nav-links">
-          <router-link to="/" class="nlink">
+          <router-link to="/home" class="nlink">
             <span class="nlink-icon">🏠</span><span>Inicio</span>
           </router-link>
-          <a href="#" class="nlink" @click.prevent="handleCatalogAccess">
+          <router-link to="/catalogo" class="nlink">
             <span class="nlink-icon">📦</span><span>Catálogo</span>
-          </a>
+          </router-link>
           <router-link to="/promociones" class="nlink nlink-active">
             <span class="nlink-icon">🎯</span><span>Promociones</span>
+          </router-link>
+          <router-link to="/menuvirtual" class="nlink">
+            <span class="nlink-icon">📖</span><span>Menú Virtual</span>
           </router-link>
           <a href="#" class="nlink" @click.prevent="showTerms = true">
             <span class="nlink-icon">📜</span><span>Política</span>
@@ -54,9 +57,10 @@
 
       <transition name="mob-drop">
         <div class="mob-menu" v-if="mobileOpen">
-          <router-link to="/"            class="mob-item" @click="mobileOpen=false">🏠 Inicio</router-link>
-          <a href="#" class="mob-item" @click.prevent="handleCatalogAccess(true)">📦 Catálogo</a>
+          <router-link to="/home"            class="mob-item" @click="mobileOpen=false">🏠 Inicio</router-link>
+          <router-link to="/catalogo" class="mob-item" @click="mobileOpen=false">📦 Catálogo</router-link>
           <router-link to="/promociones" class="mob-item mob-active" @click="mobileOpen=false">🎯 Promociones</router-link>
+          <router-link to="/menuvirtual" class="mob-item" @click="mobileOpen=false">📖 Menú Virtual</router-link>
           <a href="#" class="mob-item" @click.prevent="showTerms=true; mobileOpen=false">📜 Política</a>
           <a href="#contacto" class="mob-item" @click="mobileOpen=false">📞 Contáctanos</a>
           <template v-if="isAuthenticated">
@@ -257,15 +261,7 @@
       </div>
     </transition>
 
-    <Transition name="notice-fade">
-      <div v-if="showCatalogAccessNotice" class="catalog-access-notice" role="status" aria-live="polite">
-        <span class="notice-icon">🔒</span>
-        <div class="notice-content">
-          <strong>Acceso restringido</strong>
-          <p>Debes iniciar sesión para acceder al catálogo.</p>
-        </div>
-      </div>
-    </Transition>
+
 
   </div>
 </template>
@@ -280,9 +276,7 @@ const userName        = ref('')
 const isScrolled      = ref(false)
 const mobileOpen      = ref(false)
 const showTerms       = ref(false)
-const showCatalogAccessNotice = ref(false)
 const activeTab       = ref('all')
-let catalogNoticeTimer = null
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8222'
 
@@ -368,19 +362,7 @@ function logout() {
   router.push('/login')
 }
 
-function handleCatalogAccess(fromMobile = false) {
-  if (fromMobile) mobileOpen.value = false
-  if (isAuthenticated.value) {
-    router.push('/catalogo')
-    return
-  }
-  showCatalogAccessNotice.value = true
-  if (catalogNoticeTimer) clearTimeout(catalogNoticeTimer)
-  catalogNoticeTimer = setTimeout(() => {
-    showCatalogAccessNotice.value = false
-    catalogNoticeTimer = null
-  }, 2600)
-}
+
 
 // ── Countdown ─────────────────────────────────────────────────
 const countdown    = ref({ days: 0, hours: 0, minutes: 0, seconds: 0 })
@@ -419,10 +401,6 @@ onMounted(() => {
   onUnmounted(() => {
     clearInterval(timerInterval)
     window.removeEventListener('scroll', onScroll)
-    if (catalogNoticeTimer) {
-      clearTimeout(catalogNoticeTimer)
-      catalogNoticeTimer = null
-    }
   })
 })
 </script>

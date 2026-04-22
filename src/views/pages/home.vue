@@ -22,6 +22,7 @@
               <span class="nav-icon">🎯</span>
               Promociones
             </router-link>
+
             <a href='#politica' class="nav-link" @click.prevent="toggleTerms">
               <span class="nav-icon">📋</span>
               Política
@@ -334,40 +335,31 @@
       </section>
     </div>
 
-    <!-- Footer -->
+    <!-- ══════════════ FOOTER ══════════════ -->
     <footer class="footer" id="contactanos">
-      <div class="footer-content">
-        <div class="footer-header">
-          <h2 class="footer-title">📞 Contáctanos</h2>
+      <div class="footer-top-border"/>
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <span class="fb-emblem">🥃</span>
+          <div>
+            <span class="fb-name">Brindis Express</span>
+            <p class="fb-tagline">Experiencia Premium en Bebidas</p>
+          </div>
         </div>
-        
-        <div class="contact-grid">
-          <div class="contact-item">
-            <div class="contact-icon">📍</div>
-            <div class="contact-details">
-              <h4>Ubicación</h4>
-              <address>Calle 30, Carrera 34 #1, Ciudad XYZ</address>
-            </div>
-          </div>
-          
-          <div class="contact-item">
-            <div class="contact-icon">📞</div>
-            <div class="contact-details">
-              <h4>Teléfono</h4>
-              <a href="tel:+573023723919">+57 302 372 3919</a>
-            </div>
-          </div>
-          
-          <div class="contact-item">
-            <div class="contact-icon">✉️</div>
-            <div class="contact-details">
-              <h4>Email</h4>
-              <a href="mailto:contacto@brazzinos.com">contacto@brazzinos.com</a>
-            </div>
-          </div>
+        <div class="footer-links">
+          <a href="tel:+573023723919"                   class="flink">📞 +57 302 372 3919</a>
+          <a href="mailto:contacto@brindisexpress.com"  class="flink">✉️ contacto@brindisexpress.com</a>
+          <span class="flink">📍 Calle 30, Carrera 34 #1</span>
         </div>
       </div>
+      <p class="footer-copy">© 2025 Brindis Express · Todos los derechos reservados · Solo para mayores de 18 años</p>
     </footer>
+
+    <!-- Menú Virtual Flotante -->
+    <router-link to="/menuvirtual" class="floating-virtual-menu">
+      <span class="fvm-icon">📖</span>
+      <span class="fvm-text">Menú Virtual</span>
+    </router-link>
   </div>
 </template>
 
@@ -522,6 +514,12 @@ watch(() => route.path, () => {
   checkAuthStatus()
 }, { immediate: true })
 
+watch(() => route.query, (query) => {
+  if (query.showTerms === 'true') {
+    showTerms.value = true
+  }
+}, { immediate: true })
+
 watch(showTerms, (newValue) => {
   if (newValue) {
     document.body.style.overflow = 'hidden'
@@ -602,28 +600,37 @@ watch(isAuthPage, (newValue) => {
   scrollbar-color: rgba(201,168,76,0.65) rgba(19,14,9,0.95);
 }
 
+:global(html), :global(body) {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201,168,76,0.65) rgba(19,14,9,0.95);
+}
+
 .main-layout::-webkit-scrollbar,
-.terms-section::-webkit-scrollbar {
+.terms-section::-webkit-scrollbar,
+:global(::-webkit-scrollbar) {
   width: 10px;
   height: 10px;
 }
 
 .main-layout::-webkit-scrollbar-track,
-.terms-section::-webkit-scrollbar-track {
+.terms-section::-webkit-scrollbar-track,
+:global(::-webkit-scrollbar-track) {
   background: linear-gradient(180deg, rgba(12,9,6,0.95), rgba(19,14,9,0.95));
   border: 1px solid rgba(201,168,76,0.14);
   border-radius: 10px;
 }
 
 .main-layout::-webkit-scrollbar-thumb,
-.terms-section::-webkit-scrollbar-thumb {
+.terms-section::-webkit-scrollbar-thumb,
+:global(::-webkit-scrollbar-thumb) {
   background: linear-gradient(180deg, rgba(232,123,43,0.7), rgba(201,168,76,0.9));
   border: 1px solid rgba(255,224,144,0.25);
   border-radius: 10px;
 }
 
 .main-layout::-webkit-scrollbar-thumb:hover,
-.terms-section::-webkit-scrollbar-thumb:hover {
+.terms-section::-webkit-scrollbar-thumb:hover,
+:global(::-webkit-scrollbar-thumb:hover) {
   background: linear-gradient(180deg, rgba(246,146,70,0.85), rgba(224,191,102,0.96));
   box-shadow: 0 0 8px rgba(201,168,76,0.25);
 }
@@ -1152,48 +1159,65 @@ watch(isAuthPage, (newValue) => {
 /* Aviso de acceso a catalogo */
 
 
-/* ══ FOOTER ══ */
-.footer {
-  background: rgba(7,5,3,0.98); border-top: 1px solid rgba(201,168,76,0.08);
-  padding: 4rem 2.5rem 2.5rem; position: relative; overflow: hidden;
-}
-.footer::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, var(--gold-dk), var(--gold), var(--amber), var(--gold), var(--gold-dk), transparent);
-  background-size: 200%; animation: shimmer 4s linear infinite;
+/* ══ MENÚ VIRTUAL FLOTANTE ══ */
+.floating-virtual-menu {
+  position: fixed;
+  top: 6.5rem;
+  right: 2rem;
+  z-index: 1000;
+  display: inline-flex; align-items: center; gap: 0.6rem;
+  background: linear-gradient(135deg, rgba(201,168,76,0.12), rgba(232,123,43,0.08));
+  border: 1px solid rgba(201,168,76,0.35);
+  color: var(--gold-lt);
+  padding: 0.9rem 2.2rem;
+  border-radius: 30px;
+  text-decoration: none;
+  font-family: 'Cinzel', serif; font-size: 0.9rem; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  backdrop-filter: blur(12px);
+  transition: all 0.35s ease;
+  box-shadow: 0 6px 22px rgba(0,0,0,0.5), inset 0 0 10px rgba(201,168,76,0.05);
 }
 
-.footer-content { max-width: 1200px; margin: 0 auto; }
-.footer-header  { text-align: center; margin-bottom: 3rem; }
-.footer-title {
-  font-family: 'Cinzel', serif;
-  font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 700; margin: 0;
+.floating-virtual-menu:hover {
+  background: linear-gradient(135deg, rgba(201,168,76,0.25), rgba(232,123,43,0.2));
+  border-color: rgba(201,168,76,0.65);
+  transform: translateY(-4px);
+  box-shadow: 0 14px 36px rgba(201,168,76,0.3), 0 0 20px rgba(201,168,76,0.15);
+}
+
+.fvm-icon { font-size: 1.2rem; }
+
+/* ══ FOOTER ══ */
+.footer {
+  background: rgba(7,5,3,0.98); border-top: 1px solid rgba(201,168,76,0.1);
+  padding: 3rem 2.5rem 1.5rem; position: relative; overflow: hidden;
+}
+.footer-top-border {
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-dk), var(--gold), var(--amber), var(--gold), var(--gold-dk), transparent);
+  background-size: 200%; animation: shine 4s linear infinite;
+}
+@keyframes shine { 0%{background-position:0%} 100%{background-position:200%} }
+.footer-inner {
+  max-width: 1280px; margin: 0 auto;
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2rem; margin-bottom: 2.5rem;
+}
+.footer-brand { display: flex; align-items: flex-start; gap: 1rem; }
+.fb-emblem { font-size: 1.8rem; line-height: 1; }
+.fb-name {
+  display: block; font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 700; letter-spacing: 3px;
   background: linear-gradient(135deg, #E8C97A, #C9A84C);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.3rem;
 }
-.contact-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.8rem;
+.fb-tagline { color: rgba(200,175,130,0.3); font-size: 0.8rem; font-weight: 300; letter-spacing: 1px; }
+.footer-links { display: flex; flex-direction: column; gap: 0.55rem; }
+.flink { color: rgba(200,175,130,0.4); text-decoration: none; font-size: 0.85rem; font-weight: 300; transition: color 0.2s; }
+.flink:hover { color: var(--gold); }
+.footer-copy {
+  text-align: center; color: rgba(200,175,130,0.18); font-size: 0.75rem;
+  padding-top: 1.5rem; border-top: 1px solid rgba(201,168,76,0.06); letter-spacing: 0.5px;
 }
-.contact-item {
-  background: linear-gradient(145deg, rgba(28,22,14,0.96), rgba(19,14,9,0.96));
-  border: 1px solid rgba(201,168,76,0.12); border-radius: 8px;
-  padding: 2rem; text-align: center; transition: all 0.3s ease;
-}
-.contact-item:hover {
-  border-color: rgba(201,168,76,0.38); transform: translateY(-5px);
-  box-shadow: 0 14px 35px rgba(0,0,0,0.6), 0 0 20px rgba(201,168,76,0.07);
-}
-.contact-icon { font-size: 2.4rem; margin-bottom: 0.9rem; filter: drop-shadow(0 0 8px rgba(201,168,76,0.4)); }
-.contact-details h4 {
-  font-family: 'Cinzel', serif; color: var(--gold-lt);
-  font-size: 0.92rem; font-weight: 700; margin-bottom: 0.4rem; letter-spacing: 1px;
-}
-.contact-details address,
-.contact-details a {
-  color: rgba(200,175,130,0.38); text-decoration: none;
-  font-style: normal; font-size: 0.84rem; line-height: 1.5; transition: color 0.22s;
-}
-.contact-details a:hover { color: var(--gold); }
 
 /* ══ RESPONSIVE ══ */
 @media (max-width: 1100px) {
@@ -1212,9 +1236,10 @@ watch(isAuthPage, (newValue) => {
   .catalog-section { padding: 3rem 1.5rem 4rem; }
   .products-grid  { grid-template-columns: 1fr; }
   .user-menu      { width: 100%; justify-content: center; flex-wrap: wrap; }
-  .contact-grid   { grid-template-columns: 1fr; }
+  .footer-inner   { flex-direction: column; gap: 1.5rem; }
   .terms-section  { padding: 2rem 1.2rem; width: min(95vw, 95%); max-height: 86vh; }
   .terms-card     { padding: 1.4rem; }
+  .floating-virtual-menu { top: 5.5rem; right: 1.5rem; padding: 0.75rem 1.6rem; font-size: 0.8rem; }
 }
 @media (max-width: 480px) {
   .navbar-content { padding: 0.8rem 1rem; }
@@ -1224,8 +1249,9 @@ watch(isAuthPage, (newValue) => {
   .slide-title    { font-size: 1.8rem; }
   .catalog-section { padding: 2rem 1rem 3rem; }
   .section-title  { font-size: 1.4rem; }
-  .footer         { padding: 3rem 1.2rem 2rem; }
+  .footer         { padding: 2.5rem 1.5rem 1.5rem; }
   .terms-section  { padding: 1.8rem 0.9rem; }
   .terms-card     { padding: 1rem; }
+  .floating-virtual-menu { top: 4.5rem; right: 1rem; padding: 0.6rem 1.2rem; font-size: 0.75rem; }
 }
 </style>

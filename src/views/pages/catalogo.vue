@@ -9,18 +9,22 @@
         <router-link to="/" class="brand-title">Brindis Express</router-link>
         <div class="nav-section">
           <div class="nav-links">
-            <router-link to="/" class="nav-link">
+            <router-link to="/home" class="nav-link">
               <span class="nav-icon">🏠</span>
               Inicio
             </router-link>
-            <a href='#promociones' class="nav-link">
+            <router-link to="/promociones" class="nav-link">
               <span class="nav-icon">🎯</span>
               Promociones
-            </a>
-            <a href='#politica' class="nav-link">
+            </router-link>
+            <router-link to="/menuvirtual" class="nav-link">
+              <span class="nav-icon">📖</span>
+              Menú Virtual
+            </router-link>
+            <router-link to="/home?showTerms=true" class="nav-link">
               <span class="nav-icon">📋</span>
               Política
-            </a>
+            </router-link>
             <a href='#contactanos' class="nav-link">
               <span class="nav-icon">📞</span>
               Contáctanos
@@ -447,39 +451,24 @@
 
     
 
-    <!-- Footer -->
+    <!-- ══════════════ FOOTER ══════════════ -->
     <footer class="footer" id="contactanos">
-      <div class="footer-content">
-        <div class="footer-header">
-          <h2 class="footer-title">📞 Contáctanos</h2>
+      <div class="footer-top-border"/>
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <span class="fb-emblem">🥃</span>
+          <div>
+            <span class="fb-name">Brindis Express</span>
+            <p class="fb-tagline">Experiencia Premium en Bebidas</p>
+          </div>
         </div>
-        
-        <div class="contact-grid">
-          <div class="contact-item">
-            <div class="contact-icon">📍</div>
-            <div class="contact-details">
-              <h4>Ubicación</h4>
-              <address>Calle 30, Carrera 34 #1, Ciudad XYZ</address>
-            </div>
-          </div>
-          
-          <div class="contact-item">
-            <div class="contact-icon">📞</div>
-            <div class="contact-details">
-              <h4>Teléfono</h4>
-              <a href="tel:+573023723919">+57 302 372 3919</a>
-            </div>
-          </div>
-          
-          <div class="contact-item">
-            <div class="contact-icon">✉️</div>
-            <div class="contact-details">
-              <h4>Email</h4>
-              <a href="mailto:contacto@brazzinos.com">contacto@brazzinos.com</a>
-            </div>
-          </div>
+        <div class="footer-links">
+          <a href="tel:+573023723919"                   class="flink">📞 +57 302 372 3919</a>
+          <a href="mailto:contacto@brindisexpress.com"  class="flink">✉️ contacto@brindisexpress.com</a>
+          <span class="flink">📍 Calle 30, Carrera 34 #1</span>
         </div>
       </div>
+      <p class="footer-copy">© 2025 Brindis Express · Todos los derechos reservados · Solo para mayores de 18 años</p>
     </footer>
   </div>
 </template>
@@ -1858,48 +1847,34 @@ const handleScroll = () => {
 
 /* ══ FOOTER ══ */
 .footer {
-  background: rgba(7,5,3,0.98);
-  border-top: 1px solid rgba(201,168,76,0.1);
-  padding: 4rem 2.5rem 2.5rem; position: relative; overflow: hidden;
+  background: rgba(7,5,3,0.98); border-top: 1px solid rgba(201,168,76,0.1);
+  padding: 3rem 2.5rem 1.5rem; position: relative; overflow: hidden;
 }
-.footer::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+.footer-top-border {
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
   background: linear-gradient(90deg, transparent, var(--gold-dk), var(--gold), var(--amber), var(--gold), var(--gold-dk), transparent);
-  background-size: 200%; animation: shimmer 4s linear infinite;
+  background-size: 200%; animation: shine 4s linear infinite;
 }
-@keyframes shimmer { 0%{background-position:0%} 100%{background-position:200%} }
-
-.footer-content { max-width: 1200px; margin: 0 auto; }
-.footer-header  { text-align: center; margin-bottom: 3rem; }
-.footer-title {
-  font-family: 'Cinzel', serif;
-  font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 700; margin: 0;
+@keyframes shine { 0%{background-position:0%} 100%{background-position:200%} }
+.footer-inner {
+  max-width: 1280px; margin: 0 auto;
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2rem; margin-bottom: 2.5rem;
+}
+.footer-brand { display: flex; align-items: flex-start; gap: 1rem; }
+.fb-emblem { font-size: 1.8rem; line-height: 1; }
+.fb-name {
+  display: block; font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 700; letter-spacing: 3px;
   background: linear-gradient(135deg, #E8C97A, #C9A84C);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.3rem;
 }
-.contact-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.8rem;
+.fb-tagline { color: rgba(200,175,130,0.3); font-size: 0.8rem; font-weight: 300; letter-spacing: 1px; }
+.footer-links { display: flex; flex-direction: column; gap: 0.55rem; }
+.flink { color: rgba(200,175,130,0.4); text-decoration: none; font-size: 0.85rem; font-weight: 300; transition: color 0.2s; }
+.flink:hover { color: var(--gold); }
+.footer-copy {
+  text-align: center; color: rgba(200,175,130,0.18); font-size: 0.75rem;
+  padding-top: 1.5rem; border-top: 1px solid rgba(201,168,76,0.06); letter-spacing: 0.5px;
 }
-.contact-item {
-  background: linear-gradient(145deg, rgba(28,22,14,0.96), rgba(19,14,9,0.96));
-  border: 1px solid rgba(201,168,76,0.12); border-radius: 8px;
-  padding: 2rem; text-align: center; transition: all 0.3s ease;
-}
-.contact-item:hover {
-  border-color: rgba(201,168,76,0.38); transform: translateY(-5px);
-  box-shadow: 0 14px 35px rgba(0,0,0,0.6), 0 0 20px rgba(201,168,76,0.07);
-}
-.contact-icon { font-size: 2.4rem; margin-bottom: 0.9rem; filter: drop-shadow(0 0 8px rgba(201,168,76,0.4)); }
-.contact-details h4 {
-  font-family: 'Cinzel', serif; color: var(--gold-lt);
-  font-size: 0.92rem; font-weight: 700; margin-bottom: 0.4rem; letter-spacing: 1px;
-}
-.contact-details address,
-.contact-details a {
-  color: rgba(200,175,130,0.38); text-decoration: none;
-  font-style: normal; font-size: 0.84rem; line-height: 1.5; transition: color 0.22s;
-}
-.contact-details a:hover { color: var(--gold); }
 
 /* Scrollbar */
 .cart-items::-webkit-scrollbar,
@@ -1932,7 +1907,7 @@ html { scroll-behavior: smooth; scroll-padding-top: 100px; }
   .catalog-header { padding: 4rem 1.5rem 2.5rem; }
   .products-grid  { grid-template-columns: 1fr; }
   .user-menu      { width: 100%; justify-content: center; flex-wrap: wrap; }
-  .contact-grid   { grid-template-columns: 1fr; }
+  .footer-inner   { flex-direction: column; gap: 1.5rem; }
   .floating-cart  { bottom: 1rem; right: 1rem; }
   .pagination-info{ flex-direction: column; gap: 0.8rem; text-align: center; }
   .pagination-controls { flex-wrap: wrap; gap: 0.3rem; padding: 1rem; }
@@ -1945,7 +1920,7 @@ html { scroll-behavior: smooth; scroll-padding-top: 100px; }
   .product-info   { padding: 1.2rem; }
   .modal-content  { padding: 1.2rem; }
   .modal-info h2  { font-size: 1.5rem; }
-  .footer         { padding: 3rem 1.2rem 2rem; }
+  .footer         { padding: 2.5rem 1.5rem 1.5rem; }
   .floating-cart  { bottom: 0.5rem; right: 0.5rem; }
   .cart-toggle    { width: 52px; height: 52px; }
   .scroll-to-top  { bottom: 3rem; left: 0.5rem; width: 40px; height: 40px; }
