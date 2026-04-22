@@ -5,64 +5,91 @@
     <p>Cargando...</p>
   </div>
 
-  <div class="main-layout" :class="{ 'light-mode': !isDarkMode }">
-    <div class="background-overlay"></div>
+  <div class="main-layout wp-layout" :class="{ 'light-mode': !isDarkMode }">
+    <div class="background-overlay wp-bg-overlay"></div>
 
-    <!-- Navbar -->
-    <nav class="navbar" :class="{ 'light-mode': !isDarkMode }">
-      <div class="navbar-content">
-        <h1 class="brand-title">Brindis Express - Admin</h1>
-        <div class="nav-section">
-          <div class="nav-tabs">
-            <button
-              v-for="tab in tabs"
-              :key="tab.id"
-              class="nav-tab"
-              :class="{ active: activeTab === tab.id }"
-              @click="activeTab = tab.id"
-            >
-              {{ tab.name }}
-            </button>
-          </div>
-          <div class="nav-links">
-            <button
-              class="nav-link notification-bell-btn"
-              @click="showNotificationsPanel = !showNotificationsPanel"
-              title="Notificaciones"
-            >
-              <span class="notification-icon">🔔</span>
-              <span v-if="unreadNotifications.length" class="notification-badge animate-pulse">
-                {{ unreadNotifications.length }}
-              </span>
-            </button>
-            <a href="#theme-toggle" class="nav-link" @click.prevent="toggleTheme">
-              <span class="theme-icon">{{ isDarkMode ? '☀️' : '🌙' }}</span>
-            </a>
-          </div>
-          <div v-if="isAuthenticated" class="user-menu">
-            <div class="user-welcome">
-              <span class="welcome-icon">👑</span>
-              <div class="user-info">
-                <span class="welcome-text">Hola, {{ userName }}!</span>
-                <span class="user-role">Administrador</span>
-              </div>
+    <!-- Navbar (Top bar) -->
+    <nav class="wp-topbar">
+      <div class="wp-topbar-left">
+        <div class="wp-home-icon">🏠</div>
+        <span class="wp-site-name">Test Site</span>
+        <div class="wp-new-menu"><span class="wp-menu-icon" style="margin-right: 5px;">💬</span> 0 <span class="wp-menu-icon" style="margin-left: 10px; margin-right: 5px;">➕</span> New</div>
+      </div>
+      <div class="wp-topbar-right">
+        <button
+          class="nav-link notification-bell-btn wp-notif-btn"
+          @click="showNotificationsPanel = !showNotificationsPanel"
+          title="Notificaciones"
+        >
+          <span class="notification-icon">🔔</span>
+          <span v-if="unreadNotifications.length" class="notification-badge animate-pulse wp-badge">
+            {{ unreadNotifications.length }}
+          </span>
+        </button>
+        
+        <div v-if="isAuthenticated" class="user-menu wp-user-menu">
+          <div class="user-welcome wp-user-welcome">
+            <div class="user-info">
+              <span class="welcome-text">Howdy, {{ userName }}</span>
             </div>
-            <button @click="logout" class="logout-btn">
-              <span class="logout-icon">🚪</span>
-              Cerrar Sesión
-            </button>
+            <span class="welcome-icon wp-avatar-icon">👤</span>
           </div>
+          <button @click="logout" class="logout-btn wp-logout-btn">
+            Salir
+          </button>
         </div>
       </div>
     </nav>
 
-    <!-- Contenedor con scroll -->
-    <div class="content-scroll">
+    <!-- Body Layout -->
+    <div class="wp-body">
+      <!-- Sidebar -->
+      <aside class="wp-sidebar">
+        <div class="wp-sidebar-header">
+          <h1 class="brand-title wp-brand-title">Brindis Express</h1>
+        </div>
+        <div class="wp-sidebar-menu">
+          <button
+            v-for="tab in tabs"
+            :key="tab.id"
+            class="wp-menu-item"
+            :class="{ active: activeTab === tab.id }"
+            @click="activeTab = tab.id"
+          >
+            <span class="wp-menu-icon" v-if="tab.id === 'dashboard'">📊</span>
+            <span class="wp-menu-icon" v-else-if="tab.id === 'products'">🛍️</span>
+            <span class="wp-menu-icon" v-else-if="tab.id === 'categories'">📋</span>
+            <span class="wp-menu-icon" v-else-if="tab.id === 'orders'">📦</span>
+            <span class="wp-menu-icon" v-else-if="tab.id === 'users'">👥</span>
+            <span class="wp-menu-icon" v-else-if="tab.id === 'promotions'">🎉</span>
+            <span class="wp-menu-icon" v-else-if="tab.id === 'tickets'">💬</span>
+            <span class="wp-menu-icon" v-else-if="tab.id === 'logs'">📜</span>
+            <span class="wp-menu-icon" v-else-if="tab.id === 'payment-methods'">💳</span>
+            <span class="wp-menu-icon" v-else-if="tab.id === 'backup'">💾</span>
+            <span class="wp-menu-icon" v-else-if="tab.id === 'suppliers'">🏭</span>
+            <span class="wp-menu-icon" v-else>📌</span>
+            {{ tab.name }}
+          </button>
+          <button class="wp-menu-item">
+            <span class="wp-menu-icon">◀</span> Collapse menu
+          </button>
+        </div>
+      </aside>
 
-      <!-- Dashboard -->
-      <div v-if="activeTab === 'dashboard'" id="dashboard" class="catalog-section">
-        <div class="charts-section">
-          <div class="chart-card">
+      <!-- Main Right Content -->
+      <div class="wp-main">
+        <div class="wp-page-header">
+          <h1 class="wp-page-title" v-if="activeTab === 'dashboard'">Dashboard</h1>
+          <h1 class="wp-page-title" v-else>{{ tabs.find(t => t.id === activeTab)?.name || 'Admin' }}</h1>
+        </div>
+
+        <!-- Contenedor con scroll -->
+        <div class="content-scroll wp-content">
+  
+        <!-- Dashboard -->
+        <div v-if="activeTab === 'dashboard'" id="dashboard" class="catalog-section">
+          <div class="charts-section">
+            <div class="chart-card">
             <h3>Ventas por Mes</h3>
             <canvas ref="salesChart"></canvas>
           </div>
@@ -413,6 +440,133 @@
 </div>
       </div>
 
+    <!-- Gestión de Proveedores y Marcas -->
+<div v-if="activeTab === 'suppliers'" id="suppliers" class="catalog-section">
+  <div class="section-header">
+    <h2 class="section-title">🏭 Proveedores y Marcas</h2>
+    <div class="title-underline"></div>
+  </div>
+
+  <div class="suppliers-layout">
+    <!-- Panel Proveedores -->
+    <div class="suppliers-panel">
+      <div class="panel-header">
+        <h3 class="panel-title">Proveedores</h3>
+        <button class="add-btn" @click="openSupplierModal(null)">+ Nuevo Proveedor</button>
+      </div>
+      <div class="panel-list">
+        <div
+          class="panel-row"
+          v-for="(supplier, index) in suppliers"
+          :key="supplier.id"
+        >
+          <span class="panel-row-name">{{ supplier.nombre_empresa }}</span>
+          <div class="panel-row-actions">
+            <button class="edit-product-btn icon-btn" @click="openSupplierModal(supplier)" title="Editar">✏️</button>
+            <button class="delete-btn icon-btn" @click="deleteSupplier(index)" title="Eliminar">🗑️</button>
+          </div>
+        </div>
+        <p v-if="suppliers.length === 0" class="no-categories-message">Sin proveedores registrados.</p>
+      </div>
+    </div>
+
+    <!-- Panel Marcas -->
+    <div class="suppliers-panel">
+      <div class="panel-header">
+        <h3 class="panel-title">Marcas más importantes</h3>
+        <button class="add-btn" @click="openBrandModal(null)">+ Nueva Marca</button>
+      </div>
+      <div class="panel-list">
+        <div
+          class="panel-row"
+          v-for="(brand, index) in brands"
+          :key="brand.id"
+        >
+          <span class="panel-row-name">{{ brand.name }}</span>
+          <div class="panel-row-actions">
+            <span class="count-badge">{{ brand.refCount }} referencias</span>
+            <button class="edit-product-btn icon-btn" @click="openBrandModal(brand)" title="Editar">✏️</button>
+            <button class="delete-btn icon-btn" @click="deleteBrand(index)" title="Eliminar">🗑️</button>
+          </div>
+        </div>
+        <p v-if="brands.length === 0" class="no-categories-message">Sin marcas registradas.</p>
+      </div>
+    </div>
+  </div>
+
+ <!-- Modal Proveedor -->
+<div v-if="showSupplierModal" class="modal-overlay">
+  <div class="modal-content large-modal">
+    <h2>{{ currentSupplier ? 'Editar Proveedor' : 'Nuevo Proveedor' }}</h2>
+    <form @submit.prevent="saveSupplier">
+      <div class="form-group">
+        <label>Nombre de la Empresa *</label>
+        <input v-model="supplierForm.nombre_empresa" placeholder="Ej: Licores Mundiales S.A.S." required />
+      </div>
+      <div class="form-group">
+        <label>Contacto</label>
+        <input v-model="supplierForm.contacto" placeholder="Nombre del contacto" />
+      </div>
+      <div class="form-group">
+        <label>Teléfono</label>
+        <input v-model="supplierForm.telefono" placeholder="Ej: 3001234567" />
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input v-model="supplierForm.email" type="email" placeholder="contacto@empresa.com" />
+      </div>
+      <div class="form-group">
+        <label>Dirección</label>
+        <input v-model="supplierForm.direccion" placeholder="Dirección completa" />
+      </div>
+      <div class="form-group">
+        <label>País</label>
+        <input v-model="supplierForm.pais" placeholder="Ej: Colombia" />
+      </div>
+      <div class="form-group">
+        <label>RUC / NIT</label>
+        <input v-model="supplierForm.ruc_nit" placeholder="Ej: 900123456-1" />
+      </div>
+      <div class="form-group checkbox-group">
+        <label>
+          <input v-model="supplierForm.activo" type="checkbox" />
+          Proveedor Activo
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button type="submit" class="save-btn">💾 Guardar</button>
+        <button type="button" @click="closeSupplierModal" class="cancel-btn">❌ Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+  <!-- Modal Marca -->
+  <div v-if="showBrandModal" class="modal-overlay">
+    <div class="modal-content large-modal">
+      <h2>{{ currentBrand ? 'Editar Marca' : 'Nueva Marca' }}</h2>
+      <form @submit.prevent="saveBrand">
+        <div class="form-group">
+          <label>Nombre de la Marca *</label>
+          <input v-model="brandForm.name" placeholder="Ej: Johnnie Walker" required />
+        </div>
+        <div class="form-group">
+          <label>Referencias</label>
+          <input v-model.number="brandForm.refCount" type="number" min="0" placeholder="0" />
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="save-btn">💾 Guardar</button>
+          <button type="button" @click="closeBrandModal" class="cancel-btn">❌ Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+
+
+
       <!-- Notificaciones -->
       <div v-if="showNotificationsPanel" id="notifications" class="catalog-section notification-panel">
         <div class="section-header">
@@ -595,10 +749,19 @@
                 Producto Activo
               </label>
             </div>
-            <div class="form-group">
-              <label for="id_categoria">ID de Categoría *</label>
-              <input id="id_categoria" v-model.number="productForm.id_categoria" type="number" placeholder="ID de la categoría" required />
-            </div>
+           <div class="form-group">
+     <label for="id_categoria">ID de Categoría *</label>
+      <input id="id_categoria" v-model.number="productForm.id_categoria" type="number" placeholder="ID de la categoría" required />
+     </div>
+     <div class="form-group">
+  <label for="id_proveedor">Proveedor</label>
+  <select id="id_proveedor" v-model="productForm.id_proveedor">
+       <option :value="null">-- Sin proveedor --</option>
+       <option v-for="supplier in suppliers" :key="supplier.id_proveedor" :value="supplier.id_proveedor">
+           {{ supplier.nombre_empresa }}
+         </option>
+        </select>
+         </div>
             <div class="modal-actions">
               <button type="submit" class="save-btn">💾 Guardar</button>
               <button type="button" @click="closeProductModal" class="cancel-btn">❌ Cancelar</button>
@@ -817,39 +980,10 @@
         </div>
       </div>
 
-      <!-- Footer -->
-      <footer class="footer" id="contactanos">
-        <div class="footer-content">
-          <div class="footer-header">
-            <h2 class="footer-title">📞 Contáctanos</h2>
-          </div>
-          <div class="contact-grid">
-            <div class="contact-item">
-              <div class="contact-icon">📍</div>
-              <div class="contact-details">
-                <h4>Ubicación</h4>
-                <address>Calle 30, Carrera 34 #1, Ciudad XYZ</address>
-              </div>
-            </div>
-            <div class="contact-item">
-              <div class="contact-icon">📞</div>
-              <div class="contact-details">
-                <h4>Teléfono</h4>
-                <a href="tel:+573023723919">+57 302 372 3919</a>
-              </div>
-            </div>
-            <div class="contact-item">
-              <div class="contact-icon">✉️</div>
-              <div class="contact-details">
-                <h4>Email</h4>
-                <a href="mailto:contacto@brazzinos.com">contacto@brazzinos.com</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
-
-    </div><!-- /content-scroll -->
+ 
+        </div><!-- /content-scroll -->
+      </div><!-- /wp-main -->
+    </div><!-- /wp-body -->
   </div><!-- /main-layout -->
 </template>
 
@@ -872,6 +1006,7 @@ const tabs = ref([
   { id: 'logs',             name: 'Logs' },
   { id: 'payment-methods',  name: 'Métodos de Pago' },
   { id: 'backup',           name: 'Backup' },
+  { id: 'suppliers', name: 'Proveedores' },
 ]);
 
 const showFilters    = ref(false);
@@ -1006,7 +1141,8 @@ const currentProduct   = ref(null);
 const productForm      = ref({
   nombre: '', marca: '', precio_venta: 0, precio_compra: 0,
   stock_minimo: 0, stock_actual: 0, imagen_url: '',
-  codigo_barras: '', activo: true, id_categoria: null
+  codigo_barras: '', activo: true, id_categoria: null,
+  id_proveedor: null  // ← agrega esto
 });
 
 function openProductModal(product) {
@@ -1022,7 +1158,8 @@ function openProductModal(product) {
       imagen_url:    product.image         || '',
       codigo_barras: product.codigo_barras || '',
       activo:        product.activo !== undefined ? product.activo : true,
-      id_categoria:  product.id_categoria  || null
+      id_categoria:  product.id_categoria  || null,
+      id_proveedor:  product.id_proveedor  || null  // ← agrega esto
     };
   } else {
     currentProduct.value = null;
@@ -1063,7 +1200,8 @@ async function saveProduct() {
         imagen_url:   productForm.value.imagen_url,
         codigo_barras: productForm.value.codigo_barras,
         activo:       productForm.value.activo,
-        id_categoria: productForm.value.id_categoria
+        id_categoria: productForm.value.id_categoria,
+        ...(productForm.value.id_proveedor && { id_proveedor: Number(productForm.value.id_proveedor) }),
       };
       const response = await fetch(`${API_URL}/productos/create`, {
         method: 'POST',
@@ -1791,11 +1929,217 @@ onMounted(async () => {
   }));
 
   await loadPromotions();
+  await loadSuppliers(); // ← agrega esta línea
 
   checkLowStock();
   setTimeout(initCharts, 500);
   toggleTheme();
 });
+// ─── PROVEEDORES ──────────────────────────────────────────────
+// ─── PROVEEDORES ──────────────────────────────────────────────
+const suppliers = ref([]);
+const supplierSearchQuery = ref('');
+
+const filteredSuppliers = computed(() =>
+  suppliers.value.filter(s =>
+    s.nombre_empresa.toLowerCase().includes(supplierSearchQuery.value.toLowerCase())
+  )
+);
+
+const showSupplierModal = ref(false);
+const currentSupplier   = ref(null);
+const supplierForm      = ref({
+  nombre_empresa: '',
+  contacto:       '',
+  telefono:       '',
+  email:          '',
+  direccion:      '',
+  pais:           '',
+  ruc_nit:        '',
+  activo:         true,
+});
+
+function openSupplierModal(supplier) {
+  if (supplier) {
+    currentSupplier.value = supplier;
+    supplierForm.value = {
+      nombre_empresa: supplier.nombre_empresa || '',
+      contacto:       supplier.contacto       || '',
+      telefono:       supplier.telefono       || '',
+      email:          supplier.email          || '',
+      direccion:      supplier.direccion      || '',
+      pais:           supplier.pais           || '',
+      ruc_nit:        supplier.ruc_nit        || '',
+      activo:         supplier.activo !== undefined ? supplier.activo : true,
+    };
+  } else {
+    currentSupplier.value = null;
+    supplierForm.value = {
+      nombre_empresa: '',
+      contacto:       '',
+      telefono:       '',
+      email:          '',
+      direccion:      '',
+      pais:           '',
+      ruc_nit:        '',
+      activo:         true,
+    };
+  }
+  showSupplierModal.value = true;
+}
+
+function closeSupplierModal() { showSupplierModal.value = false; }
+
+async function loadSuppliers() {
+  try {
+    const response = await fetch(`${API_URL}/proveedores`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
+    });
+    if (!response.ok) throw new Error('Error al cargar proveedores');
+    suppliers.value = await response.json();
+  } catch (error) {
+    console.error('❌ loadSuppliers:', error);
+    showToast('No se pudieron cargar los proveedores', 'error');
+  }
+}
+
+async function saveSupplier() {
+  if (!supplierForm.value.nombre_empresa.trim()) {
+    showToast('El nombre de la empresa es obligatorio', 'error');
+    return;
+  }
+  try {
+    isLoading.value = true;
+    const payload = {
+      nombre_empresa: supplierForm.value.nombre_empresa.trim(),
+      activo:         supplierForm.value.activo,
+      ...(supplierForm.value.contacto  && { contacto:  supplierForm.value.contacto.trim()  }),
+      ...(supplierForm.value.telefono  && { telefono:  supplierForm.value.telefono.trim()  }),
+      ...(supplierForm.value.email     && { email:     supplierForm.value.email.trim()     }),
+      ...(supplierForm.value.direccion && { direccion: supplierForm.value.direccion.trim() }),
+      ...(supplierForm.value.pais      && { pais:      supplierForm.value.pais.trim()      }),
+      ...(supplierForm.value.ruc_nit   && { ruc_nit:   supplierForm.value.ruc_nit.trim()   }),
+    };
+
+    let response;
+    if (currentSupplier.value) {
+      response = await fetch(`${API_URL}/proveedores/${currentSupplier.value.id_proveedor}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+        },
+        body: JSON.stringify(payload)
+      });
+    } else {
+      response = await fetch(`${API_URL}/proveedores/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+        },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || `Error ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (currentSupplier.value) {
+      const idx = suppliers.value.findIndex(s => s.id_proveedor === currentSupplier.value.id_proveedor);
+      if (idx !== -1) suppliers.value[idx] = result;
+      pushNotification('Proveedor actualizado', `"${payload.nombre_empresa}" fue actualizado.`);
+      showToast('Proveedor actualizado', 'success');
+    } else {
+      suppliers.value.push(result);
+      pushNotification('Proveedor creado', `Se añadió: "${payload.nombre_empresa}".`);
+      showToast('Proveedor creado', 'success');
+    }
+
+    closeSupplierModal();
+  } catch (error) {
+    console.error('❌ saveSupplier:', error);
+    showToast(error.message || 'Error al guardar el proveedor', 'error');
+    pushNotification('Error', error.message || 'No se pudo guardar el proveedor.');
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+async function deleteSupplier(index) {
+  const supplier = suppliers.value[index];
+  if (!confirm(`¿Eliminar el proveedor "${supplier.nombre_empresa}"?`)) return;
+  try {
+    isLoading.value = true;
+    const response = await fetch(`${API_URL}/proveedores/${supplier.id_proveedor}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
+    });
+    if (response.status !== 204 && !response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || `Error ${response.status}`);
+    }
+    suppliers.value.splice(index, 1);
+    pushNotification('Proveedor eliminado', `"${supplier.nombre_empresa}" fue eliminado.`);
+    showToast('Proveedor eliminado', 'success');
+  } catch (error) {
+    console.error('❌ deleteSupplier:', error);
+    showToast(error.message || 'Error al eliminar el proveedor', 'error');
+  } finally {
+    isLoading.value = false;
+  }
+}
+// ─── MARCAS ───────────────────────────────────────────────────
+const brands = ref([
+  { id: 1, name: 'Johnnie Walker', refCount: 7 },
+  { id: 2, name: "Jack Daniel's",  refCount: 5 },
+  { id: 3, name: 'Smirnoff',       refCount: 9 },
+  { id: 4, name: 'Absolut',        refCount: 6 },
+  { id: 5, name: 'Bacardí',        refCount: 8 },
+  { id: 6, name: 'Don Julio',      refCount: 4 },
+]);
+
+const showBrandModal = ref(false);
+const currentBrand   = ref(null);
+const brandForm      = ref({ name: '', refCount: 0 });
+
+function openBrandModal(brand) {
+  if (brand) {
+    currentBrand.value = brand;
+    brandForm.value = { name: brand.name, refCount: brand.refCount };
+  } else {
+    currentBrand.value = null;
+    brandForm.value = { name: '', refCount: 0 };
+  }
+  showBrandModal.value = true;
+}
+function closeBrandModal() { showBrandModal.value = false; }
+
+function saveBrand() {
+  if (!brandForm.value.name.trim()) { showToast('El nombre es obligatorio', 'error'); return; }
+  if (currentBrand.value) {
+    Object.assign(currentBrand.value, brandForm.value);
+    pushNotification('Marca actualizada', `"${brandForm.value.name}" fue actualizada.`);
+    showToast('Marca actualizada', 'success');
+  } else {
+    brands.value.push({ id: Date.now(), ...brandForm.value });
+    pushNotification('Marca creada', `Se añadió: "${brandForm.value.name}".`);
+    showToast('Marca creada', 'success');
+  }
+  closeBrandModal();
+}
+
+function deleteBrand(index) {
+  if (!confirm(`¿Eliminar la marca "${brands.value[index].name}"?`)) return;
+  const name = brands.value[index].name;
+  brands.value.splice(index, 1);
+  pushNotification('Marca eliminada', `"${name}" fue eliminada.`);
+  showToast('Marca eliminada', 'success');
+}
 </script>
 
 <style scoped>
@@ -2194,20 +2538,7 @@ onMounted(async () => {
 .no-products-message { text-align:center; padding:3rem; background:rgba(40,40,40,0.5); border-radius:10px; border:2px dashed rgba(255,215,0,0.3); }
 .no-products-message p { color:#b0b0b0; font-size:1.3rem; margin:0; }
 .no-categories-message { text-align:center; padding:3rem; color:#b0b0b0; font-size:1.3rem; }
-.footer { background:rgba(10,10,10,0.95); backdrop-filter:blur(20px); border-top:1px solid rgba(255,215,0,0.2); padding:3rem 2rem 4rem; width:100%; box-sizing:border-box; }
-.footer::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,#FFD700,#FF4500,#8B4513,#FFD700); background-size:400% 400%; animation:shimmer 3s ease-in-out infinite; }
-@keyframes shimmer { 0%,100% { background-position:0% 50%; } 50% { background-position:100% 50%; } }
-.footer-content  { max-width:1600px; margin:0 auto; display:flex; flex-direction:column; align-items:center; }
-.footer-header   { text-align:center; margin-bottom:3rem; }
-.footer-title    { color:#FFD700; font-size:clamp(2rem,5vw,3rem); font-weight:700; margin:0; }
-.contact-grid    { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:2rem; width:100%; }
-.contact-item    { background:rgba(20,20,20,0.8); border:1px solid rgba(255,215,0,0.2); border-radius:15px; padding:2rem; text-align:center; transition:all 0.3s ease; }
-.contact-item:hover { border-color:rgba(255,215,0,0.5); transform:translateY(-5px); }
-.contact-icon    { font-size:clamp(2.5rem,6vw,3.5rem); margin-bottom:1.5rem; }
-.contact-details h4 { color:#FFD700; font-size:1.5rem; margin-bottom:1rem; }
-.contact-details address,
-.contact-details a  { color:rgba(255,255,255,0.8); text-decoration:none; font-style:normal; transition:color 0.3s ease; }
-.contact-details a:hover { color:#FFD700; }
+ 
 @media (max-width: 768px) {
   .navbar-content { flex-direction:column; gap:1rem; align-items:stretch; }
   .brand-title    { text-align:center; }
@@ -2335,9 +2666,13 @@ onMounted(async () => {
   content: '';
   position: absolute;
   inset: 0;
-  background: url('https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
-  filter: brightness(0.55) saturate(1.3);
-  opacity: 0.92;
+  background-color: #0d1117;
+  background-image: 
+    linear-gradient(rgba(201, 168, 76, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201, 168, 76, 0.07) 1px, transparent 1px);
+  background-size: 25px 25px;
+  filter: none;
+  opacity: 1;
   z-index: 0;
   pointer-events: none;
 }
@@ -2347,49 +2682,32 @@ onMounted(async () => {
   inset: 0;
   z-index: 1;
   background-image:
-    linear-gradient(90deg, rgba(60,30,5,0.82) 0%, rgba(20,12,3,0.68) 30%, rgba(20,12,3,0.68) 70%, rgba(60,30,5,0.82) 100%),
-    linear-gradient(180deg, rgba(180,120,20,0.18) 0%, transparent 40%, transparent 60%, rgba(180,120,20,0.12) 100%),
-    linear-gradient(90deg, transparent, rgba(201,168,76,0.6) 20%, rgba(255,200,60,0.95) 50%, rgba(201,168,76,0.6) 80%, transparent);
-  background-size: 100% 100%, 100% 100%, 200% 2px;
-  background-position: 0 0, 0 0, 0 100%;
+    linear-gradient(90deg, rgba(13,17,23,0.9) 0%, rgba(13,17,23,0.4) 30%, rgba(13,17,23,0.4) 70%, rgba(13,17,23,0.9) 100%),
+    linear-gradient(90deg, transparent, rgba(201,168,76,0.5) 20%, rgba(255,215,0,0.85) 50%, rgba(201,168,76,0.5) 80%, transparent);
+  background-size: 100% 100%, 200% 2px;
+  background-position: 0 0, 0 100%;
   background-repeat: no-repeat;
-  animation: adminNavBottomShimmer 3s linear infinite;
+  animation: techScanner 4s linear infinite;
   pointer-events: none;
+  box-shadow: inset 0 -2px 15px rgba(201, 168, 76, 0.15);
 }
-@keyframes adminNavBottomShimmer {
-  from { background-position: 0 0, 0 0, 0 100%; }
-  to   { background-position: 0 0, 0 0, 200% 100%; }
+@keyframes techScanner {
+  from { background-position: 0 0, 0 100%; }
+  to   { background-position: 0 0, 200% 100%; }
 }
 
 .navbar.light-mode::before {
-  filter: brightness(0.72) saturate(1.15);
+  background-color: #f3f4f6;
+  background-image: 
+    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  filter: none;
 }
 
 .navbar-content {
   position: relative;
   z-index: 2;
-}
-.navbar-content::before {
-  content: '❮';
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 2.5rem;
-  color: rgba(201,168,76,0.55);
-  text-shadow: 0 0 22px rgba(201,168,76,0.35);
-  pointer-events: none;
-}
-.navbar-content::after {
-  content: '❯';
-  position: absolute;
-  right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 2.5rem;
-  color: rgba(201,168,76,0.55);
-  text-shadow: 0 0 22px rgba(201,168,76,0.35);
-  pointer-events: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 /* Flechas deben no tapar contenido */
@@ -2403,18 +2721,20 @@ onMounted(async () => {
 
 /* Brand title & Section titles (TIPOGRAFÍA) */
 .brand-title {
-  font-family: 'Cinzel', serif !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+  font-variant: small-caps;
   background: linear-gradient(135deg, #FFE066 0%, #C9A84C 45%, #E87B2B 100%) !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   color: transparent !important;
-  text-shadow: 0 0 22px rgba(201,168,76,0.28) !important;
+  text-shadow: 0 0 10px rgba(201,168,76,0.4) !important;
   font-size: clamp(1.2rem, 3vw, 2.5rem) !important;
-  font-weight: 900 !important;
+  font-weight: 700 !important;
+  letter-spacing: 2px !important;
 }
 
 .section-title {
-  font-family: 'Cinzel', serif !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
   background: linear-gradient(135deg, #FFE066 0%, #C9A84C 45%, #E87B2B 100%) !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
@@ -2606,31 +2926,351 @@ onMounted(async () => {
   color: rgba(236, 240, 255, 0.85) !important;
 }
 
-/* FOOTER */
-.footer {
-  background: rgba(7,5,3,0.98) !important;
-  border-top: 1px solid rgba(201,168,76,0.15) !important;
-  position: relative;
-}
-.footer::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--gold) 0%, var(--gold-lt) 35%, var(--amber) 60%, var(--gold) 100%);
-  background-size: 400% 400%;
-  animation: footerTopShimmer 3s ease-in-out infinite;
-}
-@keyframes footerTopShimmer {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
+ 
 
 /* Responsive - no romper el navbar con flechas */
 @media (max-width: 900px) {
   .navbar-content::before,
   .navbar-content::after { display: none; }
+}
+
+
+/* ─── PROVEEDORES Y MARCAS ─────────────────────────────────── */
+.suppliers-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+@media (max-width: 768px) {
+  .suppliers-layout { grid-template-columns: 1fr; }
+}
+.suppliers-panel {
+  background: linear-gradient(145deg, rgba(28,22,14,0.98), rgba(19,14,9,0.98));
+  border: 1px solid rgba(201,168,76,0.12);
+  border-radius: 15px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(201,168,76,0.15);
+}
+.panel-title {
+  font-family: 'Cinzel', serif;
+  background: linear-gradient(135deg, #FFE066 0%, #C9A84C 45%, #E87B2B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0;
+}
+.panel-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.panel-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(201,168,76,0.08);
+  border-radius: 8px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.panel-row:hover {
+  background: rgba(201,168,76,0.06);
+  border-color: rgba(201,168,76,0.25);
+}
+.panel-row-name {
+  color: rgba(255, 236, 168, 0.92);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+.panel-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.count-badge {
+  background: rgba(201,168,76,0.15);
+  border: 1px solid rgba(201,168,76,0.3);
+  color: #FFE066;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.icon-btn {
+  padding: 0.3rem 0.5rem !important;
+  min-width: unset !important;
+  flex: none !important;
+  font-size: 0.8rem !important;
+  border-radius: 8px !important;
+}
+
+.modal-content {
+  overflow-y: auto !important;
+  max-height: 90vh !important;
+}
+
+.modal-content form {
+  gap: 0.8rem !important;
+}
+
+.modal-content .form-group {
+  gap: 0.3rem !important;
+}
+
+.modal-content .form-group label {
+  font-size: 0.9rem !important;
+}
+
+.modal-content .form-group input,
+.modal-content .form-group select,
+.modal-content .form-group textarea {
+  padding: 0.5rem 0.8rem !important;
+  font-size: 0.9rem !important;
+}
+
+.modal-content h2 {
+  font-size: 1.4rem !important;
+  margin-bottom: 0.8rem !important;
+}
+
+/* WordPress Admin Dashboard Structure Styles */
+.wp-layout {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100vh !important;
+  width: 100vw !important;
+  overflow: hidden !important;
+  position: absolute;
+  top: 0; left: 0;
+  z-index: 9999;
+}
+
+.wp-topbar {
+  height: 32px;
+  background: rgba(10,7,3,0.95) !important;
+  border-bottom: 1px solid rgba(201,168,76,0.3) !important;
+  color: #fff;
+  display: flex !important;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  flex-shrink: 0;
+  width: 100% !important;
+}
+
+.wp-topbar-left, .wp-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.wp-site-name {
+  font-size: 13px;
+  color: #FFE066;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+}
+
+.wp-home-icon { font-size: 14px; }
+.wp-new-menu { font-size: 13px; display: flex; align-items: center; gap: 5px; color: rgba(240,220,180,0.85); cursor: pointer; }
+.wp-new-menu:hover { color: #FFE066; }
+
+.wp-user-menu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wp-user-welcome {
+  background: transparent !important;
+  border: none !important;
+  color: rgba(240,220,180,0.85) !important;
+  padding: 0 !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.wp-avatar-icon { font-size: 18px; filter: none; }
+
+.wp-logout-btn {
+  background: transparent !important;
+  border: none !important;
+  color: rgba(240,220,180,0.85) !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  min-width: unset !important;
+  margin-left: 10px;
+  transform: none !important;
+}
+.wp-logout-btn:hover {
+  color: #FFE066 !important;
+}
+
+.wp-notif-btn {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+.wp-badge {
+  background: linear-gradient(135deg, #FF4500, #e53e3e) !important;
+  color: white !important;
+  font-size: 10px !important;
+  padding: 2px 5px !important;
+}
+
+.wp-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.wp-sidebar {
+  width: 260px;
+  background: rgba(15,11,7,0.98);
+  border-right: 1px solid rgba(201,168,76,0.15) !important;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: 100%;
+}
+
+.wp-sidebar-header {
+  padding: 15px 20px;
+  background: transparent;
+  border-bottom: 1px solid rgba(201,168,76,0.1) !important;
+  display: flex;
+  align-items: center;
+}
+
+.wp-brand-title {
+  color: transparent !important;
+  font-size: 18px !important;
+  background: linear-gradient(135deg, #FFE066 0%, #C9A84C 45%, #E87B2B 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  font-weight: 700 !important;
+  text-shadow: 0 0 10px rgba(201,168,76,0.4) !important;
+  letter-spacing: 0 !important;
+  margin: 0 !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+}
+
+.wp-sidebar-menu {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  margin-top: 15px;
+}
+
+.wp-menu-item {
+  background: transparent;
+  border: none;
+  color: rgba(240,220,180,0.85);
+  padding: 14px 20px;
+  text-align: left;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: background 0.2s, color 0.2s;
+  text-decoration: none;
+  font-family: 'DM Sans', sans-serif;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  transform: none !important;
+}
+
+.wp-menu-item:hover {
+  color: #FFE066 !important;
+  background: rgba(201,168,76,0.1) !important;
+}
+
+.wp-menu-item.active {
+  background: linear-gradient(135deg, #FFE066 0%, #C9A84C 45%, #E87B2B 100%) !important;
+  color: #0D0A07 !important;
+  font-weight: 700 !important;
+  border-color: transparent !important;
+  box-shadow: 0 0 15px rgba(201,168,76,0.2) !important;
+}
+
+.wp-menu-icon {
+  font-size: 18px;
+  width: 24px;
+  text-align: center;
+}
+
+.wp-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+}
+
+.wp-page-header {
+  padding: 15px 20px 0;
+}
+.wp-page-title {
+  font-family: 'Cinzel', serif !important;
+  background: linear-gradient(135deg, #FFE066 0%, #C9A84C 45%, #E87B2B 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  font-size: 23px;
+  font-weight: 700;
+  margin: 0;
+  padding: 0;
+}
+
+.wp-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 20px 40px 20px !important;
+  background: transparent !important;
+  max-height: none !important;
+}
+
+/* Fix spacing for the dashboard inside layout */
+.wp-content .catalog-section {
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  max-width: none !important;
+}
+
+/* Fixing Filters Sidebar layout to fit WP structure */
+.filters-sidebar {
+  position: static !important;
+  width: 100% !important;
+  padding: 0 0 15px 0 !important;
+  background: transparent !important;
+  border: none !important;
+}
+.filters-content {
+  background: linear-gradient(145deg, rgba(28,22,14,0.98), rgba(19,14,9,0.98)) !important;
+  border: 1px solid rgba(201,168,76,0.12) !important;
+  border-radius: 8px;
+  padding: 15px !important;
+}
+.filters-toggle {
+  position: static !important;
+  margin-bottom: 10px;
 }
 </style>
